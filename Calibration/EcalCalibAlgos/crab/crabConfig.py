@@ -26,7 +26,7 @@ config.Data.unitsPerJob = 10
 config.Data.publication = False
 #config.Data.publishDBS = 'phys03'
 #config.Data.publishDataName = 'ECAL-multifit-50ns'
-config.Data.outLFN = "/store/user/meridian/zeeCalibSkim"
+config.Data.outLFN = "/store/user/crovelli/zeeCalib"
 
 config.section_("Site")
 config.Site.storageSite = "T2_IT_Rome"
