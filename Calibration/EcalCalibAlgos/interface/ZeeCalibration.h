@@ -236,10 +236,13 @@ class ZeeCalibration : public edm::ESProducerLooper {
   TH1F* h_ESCEtrue_[25];
   TH2F* h_ESCEtrueVsEta_[25];
 
+  TH2F* h2_coeffVsEta_loop[25];  // chiara: extra plots
+
   TH2F* h2_coeffVsEta_;
   TH2F* h2_coeffVsEtaGrouped_;
   TH2F* h2_zMassVsLoop_;
   TH2F* h2_zMassDiffVsLoop_;
+  TH2F* h2_zMassDiffAbsVsLoop_;
   TH2F* h2_zWidthVsLoop_;
   TH2F* h2_coeffVsLoop_;
 
@@ -257,6 +260,12 @@ class ZeeCalibration : public edm::ESProducerLooper {
 
   TH2F* h2_chi2_[25];
   TH2F* h2_iterations_[25];
+
+  TH1F* h1_zMassBarrel_[25];
+  TH1F *h1_calibCoeffBeforeBarrel_[25];
+  TH1F *h1_calibCoeffAfterBarrel_[25];
+  TH1F *h1_initCalibCoeffBarrel_[25];
+  TH2F *h2_calibCoeffVsInitCalibCoeffBarrel_[25];
 
   TH2F * h2_xtalRecalibCoeffBarrel_[25];
   TH2F * h2_xtalRecalibCoeffEndcapMinus_[25];
