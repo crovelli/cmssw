@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <TH1.h>
+#include <TH2.h>
 
 #include "Calibration/Tools/interface/CalibElectron.h"
 
@@ -34,6 +35,7 @@ class ZIterativeAlgorithmWithFit
     TH1* weightedRescaleFactor[nMaxIterations][nMaxChannels];
     TH1* unweightedRescaleFactor[nMaxIterations][nMaxChannels];
     TH1* weight[nMaxIterations][nMaxChannels];
+    TH2* weightedZmassVsChannel[nMaxIterations];  
   };
 
   /// Default constructor

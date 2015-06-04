@@ -41,7 +41,7 @@ process.options = cms.untracked.PSet(
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag                        
 if (MC):
-    process.GlobalTag = GlobalTag(process.GlobalTag, 'PHYS14_25_V1', '')     
+    process.GlobalTag = GlobalTag(process.GlobalTag, 'PHYS14_25_V2', '')     
 else:
     process.GlobalTag.globaltag = 'GR_R_42_V17::All'   # chiara, da cambiare
         

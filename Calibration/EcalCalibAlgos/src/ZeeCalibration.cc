@@ -252,6 +252,7 @@ void ZeeCalibration::beginOfJob(edm::EventSetup const& iSetup) {
 	  initCalibCoeff[k]+=miscalib;
 	}
 	initCalibCoeff[k]/=(float)ringIds.size();
+
 #ifdef DEBUG
 	std::cout << k << " " << initCalibCoeff[k] << " " << ringIds.size() << std::endl;
 #endif
@@ -352,12 +353,9 @@ void ZeeCalibration::endOfJob() {
   h1_massBeforeCut_->Write();
   h1_massAfterCut_->Write();
 
-  h1_eventsBeforeEWKSelection_    ->Write();
-  h1_eventsAfterEWKSelection_     ->Write();
-  h1_eventsBeforeBorderSelection_ ->Write();
-  h1_eventsAfterBorderSelection_  ->Write();
-
-  h1_borderElectronClassification_->Write();
+  // h1_eventsBeforeBorderSelection_ ->Write();
+  // h1_eventsAfterBorderSelection_  ->Write();
+  // h1_borderElectronClassification_->Write();
  
   h2_xtalMiscalibCoeffBarrel_      ->Write();
   h2_xtalMiscalibCoeffEndcapMinus_ ->Write();
@@ -367,52 +365,65 @@ void ZeeCalibration::endOfJob() {
   // h1_electronCosTheta_TK_->Write();
   // h1_electronCosTheta_SC_TK_->Write();
 
-  h1_zMassResol_ ->Write();
+  // h1_zMassResol_ ->Write();
   // h1_zEtaResol_  ->Write();
   // h1_zPhiResol_  ->Write();
-  h1_eleEtaResol_->Write();
-  h1_elePhiResol_->Write();
-  h1_seedOverSC_ ->Write();
-  h1_preshowerOverSC_->Write();
+  // h1_eleEtaResol_->Write();
+  // h1_elePhiResol_->Write();
+  // h1_seedOverSC_ ->Write();
+  // h1_preshowerOverSC_->Write();
 
   for(unsigned int i =0; i<25; i++){
     if( i < theMaxLoops ) {
-      h_ESCEtrueVsEta_[i]->Write();
-      h_ESCEtrue_[i]->Write();
+      // h_ESCEtrueVsEta_[i]->Write();
+      // h_ESCEtrue_[i]->Write();
       h2_chi2_[i]->Write();
       h2_iterations_[i]->Write();
+      h1_zMassBarrel_[i]->Write();
+      h2_coeffVsEta_loop[i]->Write();   
     }
+  }
+
+  for(unsigned int i =0; i<25; i++){
+    if( i < theMaxLoops ) {
+      char histoNameEta[300];
+      sprintf(histoNameEta,"Prof_coeffVsEta_loop%d",i);    
+      TProfile *px = h2_coeffVsEta_loop[i]->ProfileX(histoNameEta);
+      px->SetXTitle("Eta channel");
+      px->SetYTitle("recalibCoeff");
+      px->Write();
+    }    
   }
 
   h1_eleClasses_->Write();
 
-  h_eleEffEta_[0]->Write();
-  h_eleEffPhi_[0]->Write();
-  h_eleEffPt_[0]->Write();
+  // h_eleEffEta_[0]->Write();
+  // h_eleEffPhi_[0]->Write();
+  // h_eleEffPt_[0]->Write();
   
-  h_eleEffEta_[1]->Write();
-  h_eleEffPhi_[1]->Write();
-  h_eleEffPt_[1]->Write();
+  // h_eleEffEta_[1]->Write();
+  // h_eleEffPhi_[1]->Write();
+  // h_eleEffPt_[1]->Write();
 
-  h1_deltaEta -> Write();
-  h1_deltaPhi -> Write();
-  h1_sIeIe    -> Write();
-  h1_hoe      -> Write();
-  h1_eop      -> Write();
-  h1_do       -> Write();
-  h1_dz       -> Write();
-  h1_pfIso    -> Write();
-  h1_mhits    -> Write();
+  // h1_deltaEta -> Write();
+  // h1_deltaPhi -> Write();
+  // h1_sIeIe    -> Write();
+  // h1_hoe      -> Write();
+  // h1_eop      -> Write();
+  // h1_do       -> Write();
+  // h1_dz       -> Write();
+  // h1_pfIso    -> Write();
+  // h1_mhits    -> Write();
 
-  h1_afterEWK_deltaEta -> Write();
-  h1_afterEWK_deltaPhi -> Write();
-  h1_afterEWK_sIeIe    -> Write();
-  h1_afterEWK_hoe      -> Write();
-  h1_afterEWK_eop      -> Write();
-  h1_afterEWK_do       -> Write();
-  h1_afterEWK_dz       -> Write();
-  h1_afterEWK_pfIso    -> Write();
-  h1_afterEWK_mhits    -> Write();
+  // h1_afterEWK_deltaEta -> Write();
+  // h1_afterEWK_deltaPhi -> Write();
+  // h1_afterEWK_sIeIe    -> Write();
+  // h1_afterEWK_hoe      -> Write();
+  // h1_afterEWK_eop      -> Write();
+  // h1_afterEWK_do       -> Write();
+  // h1_afterEWK_dz       -> Write();
+  // h1_afterEWK_pfIso    -> Write();
+  // h1_afterEWK_mhits    -> Write();
 
   int j = 0;
   int flag=0;
@@ -536,7 +547,7 @@ void ZeeCalibration::endOfJob() {
       aa++;
     }
     // EE end
-
+  
     if(!isNearCrack){
       h2_coeffVsEta_->Fill( ringNumberCorrector(k), calibCoeff[k] );
       h2_miscalRecal_->Fill( initCalibCoeff[k], 1./calibCoeff[k] );
@@ -588,11 +599,12 @@ void ZeeCalibration::endOfJob() {
   px->SetXTitle("Eta channel");
   px->SetYTitle("recalibCoeff");
   px->Write();
-  
+
   h2_coeffVsEta_->Write();
   h2_coeffVsEtaGrouped_->Write();
   h2_zMassVsLoop_->Write();
   h2_zMassDiffVsLoop_->Write();
+  h2_zMassDiffAbsVsLoop_->Write();
   h2_zWidthVsLoop_->Write();
   h2_coeffVsLoop_->Write();
   h2_miscalRecal_->Write();
@@ -695,10 +707,10 @@ void ZeeCalibration::endOfJob() {
 
   outputFile_->Close();
   
-  myZeePlots_ ->writeEleHistograms();
-  myZeePlots_ ->writeMCEleHistograms();
-  myZeePlots_ ->writeZHistograms();
-  myZeePlots_ ->writeMCZHistograms();
+  // myZeePlots_ ->writeEleHistograms();
+  // myZeePlots_ ->writeMCEleHistograms();
+  // myZeePlots_ ->writeZHistograms();
+  // myZeePlots_ ->writeMCZHistograms();
     
   myZeeRescaleFactorPlots_ = new ZeeRescaleFactorPlots("zeeRescaleFactorPlots.root");
   myZeeRescaleFactorPlots_->writeHistograms( theAlgorithm_ );
@@ -725,7 +737,6 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
 #endif
 
   h1_Selection_->Fill(0.);
-  h1_Selection_->Fill(1.);
 
   // Get EBRecHits
   Handle<EBRecHitCollection> phits;
@@ -799,7 +810,7 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
   
   // at least 2 superclusters must be present
   if(  ( ebScCollection->size()+eeScCollection->size() ) < 2) return kContinue;
-  h1_Selection_->Fill(2.);
+  h1_Selection_->Fill(1.);
   
   
 
@@ -826,8 +837,9 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
 #endif
 
   if(electronCollection->size() < 2) return kContinue; 
-  h1_Selection_->Fill(3.);    
+  h1_Selection_->Fill(2.);    
   
+
   ///////////////////////////////////////////////////////////////////////////////////////
   ///                          START HERE....
   ///////////////////////////////////////////////////////////////////////////////////////
@@ -853,6 +865,13 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
 
     if (!(eleIt->parentSuperCluster()))
       continue;
+
+    // only electrons in the acceptance and with pT above threshold
+    float etaFromSc   = eleIt->parentSuperCluster()->eta();
+    float thetaFromSc = eleIt->parentSuperCluster()->position().theta();
+    float ptFromSc    = (eleIt->parentSuperCluster()->energy())*fabs(sin(thetaFromSc));
+    if (ptFromSc<20) continue;                // chiara: hardcoded!
+    if (fabs(etaFromSc)>2.5) continue;
 
     float DeltaRMineleSCbarrel(0.15);
     float DeltaRMineleSCendcap(0.15);
@@ -905,7 +924,7 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
 
   // COMBINATORY FOR Z MASS - begin 
   if (calibElectrons.size() < 2) return kContinue;
-  h1_Selection_->Fill(5.);
+  h1_Selection_->Fill(3.);
 
 #ifdef DEBUG
   std::cout << "building zeeCandidates" << std::endl;
@@ -951,7 +970,7 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
   h1_ZCandMult_->Fill(zeeCandidates.size());
 
   if(zeeCandidates.size()==0 || myBestZ==-1 ) return kContinue;
-  h1_Selection_->Fill(6.);
+  h1_Selection_->Fill(4.);
 
   // if (loopFlag_ == 0)
   //   myZeePlots_->fillZInfo( zeeCandidates[myBestZ] );
@@ -1047,21 +1066,21 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
   */
   ///////////////////////////ELECTRON SELECTION///////////////////////////////
   if(myBestZ == -1) return kContinue;
+  h1_Selection_->Fill(5.);
 
   h1_massBeforeCut_->Fill(mass);
   bool invMassBool = ( (mass > minInvMassCut_) && (mass < maxInvMassCut_) );
   if (!invMassBool) return kContinue;
   h1_massAfterCut_->Fill(mass);
 
-  h1_Selection_->Fill(7.);
+  h1_Selection_->Fill(6.);
 
 
   // Variables implementation from
   // https://github.com/lgray/cmssw/blob/common_isolation_selection_70X/TestElectronID/ElectronIDAnalyzer/plugins/ElectronIDAnalyzer.cc
   bool selectionBool = false;  
 
-  h1_Selection_->Fill(8.);
-  h1_eventsAfterEWKSelection_->Fill(1);
+  h1_Selection_->Fill(7.);
   
   // ----------------------------------------------------------------------
   // extra selections (on top of ID + mass window) based on EB/EE and class
@@ -1126,6 +1145,7 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
     isEBEB=0;
     if (fabs(eta1)<1.5 && fabs(eta2)<1.5 )  
       {     
+	h1_zMassBarrel_[loopFlag_]->Fill(mass4tree);
 	h1_reco_ZMassCorrBB_->Fill(mass4tree);
 	isEBEB=1;
       }
@@ -1175,6 +1195,7 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
   ZIterativeAlgorithmWithFit::gausfit(h1_reco_ZMass_,par,errpar,2.,2., &zChi2, &zIters );
   h2_zMassVsLoop_     -> Fill(loopFlag_,  par[1] );
   h2_zMassDiffVsLoop_ -> Fill(loopFlag_,  (par[1]-MZ)/MZ );
+  h2_zMassDiffAbsVsLoop_ -> Fill(loopFlag_,  par[1]-MZ );
   h2_zWidthVsLoop_    -> Fill(loopFlag_, par[2] );
 
 
@@ -1227,11 +1248,18 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
     if(calibMode_ == "ABS_SCALE" || calibMode_ == "ETA_ET_MODE" )
       ringIds = EcalRingCalibrationTools::getDetIdsInECAL();
 
+  
     for (unsigned int iid=0; iid<ringIds.size();++iid){
 	
       if(ringIds[iid].subdetId() == EcalBarrel){
 	EBDetId myEBDetId(ringIds[iid]);  
 	h2_xtalRecalibCoeffBarrel_[loopFlag_]->SetBinContent( myEBDetId.ieta() + 86, myEBDetId.iphi(), 100 * (calibCoeff[ieta]*initCalibCoeff[ieta] - 1.) );
+
+	// filling extra histos to debug - barrel only 
+	h1_calibCoeffBeforeBarrel_[loopFlag_]->Fill(calibCoeff[ieta]/optimizedCoefficients[ieta]);
+	h1_calibCoeffAfterBarrel_[loopFlag_]->Fill(calibCoeff[ieta]);
+	h1_initCalibCoeffBarrel_[loopFlag_]->Fill(initCalibCoeff[ieta]);
+	h2_calibCoeffVsInitCalibCoeffBarrel_[loopFlag_]->Fill(initCalibCoeff[ieta],calibCoeff[ieta]);
       }
 
       if(ringIds[iid].subdetId() == EcalEndcap){
@@ -1247,7 +1275,10 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
     }    
   }
   
-  
+  for( int kkk = 0; kkk<theAlgorithm_->getNumberOfChannels(); kkk++ ) {  
+    h2_coeffVsEta_loop[loopFlag_]->Fill( ringNumberCorrector(kkk), calibCoeff[kkk] );
+  }
+
   // dump residual miscalibration at each loop 
   for ( int k = 0; k<theAlgorithm_->getNumberOfChannels(); k++ ) {
     bool isNearCrack = ( abs( ringNumberCorrector(k) ) == 1 || abs( ringNumberCorrector(k) ) == 25 ||
@@ -1294,6 +1325,11 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
   h2_xtalRecalibCoeffBarrel_[loopFlag_] -> Write();
   h2_xtalRecalibCoeffEndcapPlus_[loopFlag_] -> Write();
   h2_xtalRecalibCoeffEndcapMinus_[loopFlag_] -> Write();
+
+  h1_calibCoeffBeforeBarrel_[iLoop]->Write();
+  h1_calibCoeffAfterBarrel_[iLoop]->Write();
+  h1_initCalibCoeffBarrel_[iLoop]->Write();
+  h2_calibCoeffVsInitCalibCoeffBarrel_[iLoop]->Write();
   
   loopFlag_++;
   
@@ -1313,17 +1349,14 @@ void ZeeCalibration::bookHistograms() {
   h1_massBeforeCut_ = new TH1F("h1_massBeforeCut_","h1_massBeforeCut_",150,0.,150.); 
   h1_massAfterCut_  = new TH1F("h1_massAfterCut_", "h1_massAfterCut_", 150,0.,150.); 
 
-  h1_eventsBeforeEWKSelection_ = new TH1F("h1_eventsBeforeEWKSelection", "h1_eventsBeforeEWKSelection", 5,0,5); 
-  h1_eventsAfterEWKSelection_  = new TH1F("h1_eventsAfterEWKSelection", "h1_eventsAfterEWKSelection", 5,0,5);
+  // h1_eventsBeforeBorderSelection_ = new TH1F("h1_eventsBeforeBorderSelection", "h1_eventsBeforeBorderSelection", 5,0,5); 
+  // h1_eventsAfterBorderSelection_  = new TH1F("h1_eventsAfterBorderSelection", "h1_eventsAfterBorderSelection", 5,0,5);
+  // h1_borderElectronClassification_ = new TH1F("h1_borderElectronClassification", "h1_borderElectronClassification", 6, -1, 5);
 
-  h1_eventsBeforeBorderSelection_ = new TH1F("h1_eventsBeforeBorderSelection", "h1_eventsBeforeBorderSelection", 5,0,5); 
-  h1_eventsAfterBorderSelection_  = new TH1F("h1_eventsAfterBorderSelection", "h1_eventsAfterBorderSelection", 5,0,5);
+  // h1_seedOverSC_ = new TH1F("h1_seedOverSC", "h1_seedOverSC", 400, 0., 2.);
+  // h1_preshowerOverSC_= new TH1F("h1_preshowerOverSC", "h1_preshowerOverSC", 400, 0., 1.);
 
-  h1_seedOverSC_ = new TH1F("h1_seedOverSC", "h1_seedOverSC", 400, 0., 2.);
-
-  h1_borderElectronClassification_ = new TH1F("h1_borderElectronClassification", "h1_borderElectronClassification", 6, -1, 5);
-  h1_preshowerOverSC_= new TH1F("h1_preshowerOverSC", "h1_preshowerOverSC", 400, 0., 1.);
-
+  /*
   for (int i=0;i<2;i++) {
 
     char histoName[50];
@@ -1340,7 +1373,8 @@ void ZeeCalibration::bookHistograms() {
     h_eleEffPt_[i] = new TH1F(histoName,histoName, 200, 0., 200.);
     h_eleEffPt_[i]->SetXTitle("p_{T}(GeV/c)");
   }
-  
+  */
+
   h2_xtalMiscalibCoeffBarrel_ = new TH2F("h2_xtalMiscalibCoeffBarrel","h2_xtalMiscalibCoeffBarrel", 171, -85, 85, 360, 0, 360);
   h2_xtalMiscalibCoeffEndcapMinus_ = new TH2F("h2_xtalMiscalibCoeffEndcapMinus", "h2_xtalMiscalibCoeffEndcapMinus", 100, 0,100, 100, 0, 100);
   h2_xtalMiscalibCoeffEndcapPlus_ = new TH2F("h2_xtalMiscalibCoeffEndcapPlus", "h2_xtalMiscalibCoeffEndcapPlus", 100, 0,100, 100, 0, 100);
@@ -1354,14 +1388,18 @@ void ZeeCalibration::bookHistograms() {
   for (int i=0;i<25;i++) {
       
     char histoName[50];
-    sprintf(histoName,"h_ESCEtrueVsEta_%d",i);
-    h_ESCEtrueVsEta_[i] = new TH2F(histoName,histoName, 150, 0., 2.7, 300,0.,1.5);
-    h_ESCEtrueVsEta_[i]->SetXTitle("|#eta|");
-    h_ESCEtrueVsEta_[i]->SetYTitle("E_{SC,raw}/E_{MC}");
+
+    // sprintf(histoName,"h_ESCEtrueVsEta_%d",i);
+    // h_ESCEtrueVsEta_[i] = new TH2F(histoName,histoName, 150, 0., 2.7, 300,0.,1.5);
+    // h_ESCEtrueVsEta_[i]->SetXTitle("|#eta|");
+    // h_ESCEtrueVsEta_[i]->SetYTitle("E_{SC,raw}/E_{MC}");
     
-    sprintf(histoName,"h_ESCEtrue_%d",i);
-    h_ESCEtrue_[i] = new TH1F(histoName,histoName, 300,0.,1.5);
-    
+    // sprintf(histoName,"h_ESCEtrue_%d",i);
+    // h_ESCEtrue_[i] = new TH1F(histoName,histoName, 300,0.,1.5);
+
+    sprintf(histoName,"h1_zMassBarrel_%d",i);
+    h1_zMassBarrel_[i] = new TH1F(histoName,histoName, 120,30.,150.);
+
     sprintf(histoName,"h2_chi2_%d",i);
     h2_chi2_[i] = new TH2F(histoName,histoName, 1000,-150,150, 1000, -1, 5);
     
@@ -1383,15 +1421,20 @@ void ZeeCalibration::bookHistograms() {
     h2_xtalRecalibCoeffEndcapPlus_[i] = new TH2F(histoName,histoName, 100, 0,100, 100, 0, 100);
     h2_xtalRecalibCoeffEndcapPlus_[i]->SetXTitle("ix");
     h2_xtalRecalibCoeffEndcapPlus_[i]->SetYTitle("iy");
-  }                         
-  
-  h1_zMassResol_ = new TH1F("zMassResol", "zMassResol", 200, -50., 50.);
-  h1_zMassResol_->SetXTitle("M_{Z, reco} - M_{Z, MC}");
-  h1_zMassResol_->SetYTitle("events");
 
-  h1_eleEtaResol_ = new TH1F("eleEtaResol", "eleEtaResol", 100, -0.01, 0.01);
-  h1_eleEtaResol_->SetXTitle("#eta_{reco} - #eta_{MC}");
-  h1_eleEtaResol_->SetYTitle("events");
+    sprintf(histoName,"h2_calibCoeffVsEta_loop%d",i);
+    h2_coeffVsEta_loop[i]= new TH2F(histoName,histoName,249,-124,125, 200, 0., 2.);
+    h2_coeffVsEta_loop[i]->SetXTitle("Eta channel");
+    h2_coeffVsEta_loop[i]->SetYTitle("recalibCoeff");
+  }                         
+
+  // h1_zMassResol_ = new TH1F("zMassResol", "zMassResol", 200, -50., 50.);
+  // h1_zMassResol_->SetXTitle("M_{Z, reco} - M_{Z, MC}");
+  // h1_zMassResol_->SetYTitle("events");
+
+  // h1_eleEtaResol_ = new TH1F("eleEtaResol", "eleEtaResol", 100, -0.01, 0.01);
+  // h1_eleEtaResol_->SetXTitle("#eta_{reco} - #eta_{MC}");
+  // h1_eleEtaResol_->SetYTitle("events");
 
   // h1_electronCosTheta_TK_ = new TH1F("electronCosTheta_TK", "electronCosTheta_TK", 100, -1, 1);
   // h1_electronCosTheta_TK_->SetXTitle("cos #theta_{12}");
@@ -1405,9 +1448,9 @@ void ZeeCalibration::bookHistograms() {
   // h1_electronCosTheta_SC_TK_->SetXTitle("cos #theta_{12}^{SC}/ cos #theta_{12}^{TK} - 1");
   // h1_electronCosTheta_SC_TK_->SetYTitle("events");
   
-  h1_elePhiResol_ = new TH1F("elePhiResol", "elePhiResol", 100, -0.01, 0.01);
-  h1_elePhiResol_->SetXTitle("#phi_{reco} - #phi_{MC}");
-  h1_elePhiResol_->SetYTitle("events");
+  // h1_elePhiResol_ = new TH1F("elePhiResol", "elePhiResol", 100, -0.01, 0.01);
+  // h1_elePhiResol_->SetXTitle("#phi_{reco} - #phi_{MC}");
+  // h1_elePhiResol_->SetYTitle("events");
 
   // h1_zEtaResol_ = new TH1F("zEtaResol", "zEtaResol", 200, -1., 1.);
   // h1_zEtaResol_->SetXTitle("#eta_{Z, reco} - #eta_{Z, MC}");
@@ -1417,9 +1460,9 @@ void ZeeCalibration::bookHistograms() {
   // h1_zPhiResol_->SetXTitle("#phi_{Z, reco} - #phi_{Z, MC}");
   // h1_zPhiResol_->SetYTitle("events");
 
-  h1_nEleReco_ = new TH1F("nEleReco","Number of reco electrons",10,-0.5,10.5);
-  h1_nEleReco_->SetXTitle("nEleReco");
-  h1_nEleReco_->SetYTitle("events");
+  // h1_nEleReco_ = new TH1F("nEleReco","Number of reco electrons",10,-0.5,10.5);
+  // h1_nEleReco_->SetXTitle("nEleReco");
+  // h1_nEleReco_->SetYTitle("events");
   
   h1_occupancyVsEta_ = new TH1F("occupancyVsEta","occupancyVsEta",249, -124, 124);
   h1_occupancyVsEta_->SetYTitle("Weighted electron statistics");
@@ -1442,10 +1485,10 @@ void ZeeCalibration::bookHistograms() {
   h1_eleClasses_->SetYTitle("#");
 
   // myZeePlots_ -> bookHLTHistograms();
-  myZeePlots_ -> bookZMCHistograms();
-  myZeePlots_ -> bookZHistograms();
-  myZeePlots_ -> bookEleMCHistograms();	
-  myZeePlots_ -> bookEleHistograms();		
+  // myZeePlots_ -> bookZMCHistograms();
+  // myZeePlots_ -> bookZHistograms();
+  // myZeePlots_ -> bookEleMCHistograms();	
+  // myZeePlots_ -> bookEleHistograms();		
   
   h1_ZCandMult_ =new TH1F("ZCandMult","Multiplicity of Z candidates in one event",10,-0.5,10.5);
   h1_ZCandMult_ ->SetXTitle("ZCandMult");
@@ -1479,11 +1522,15 @@ void ZeeCalibration::bookHistograms() {
   h2_coeffVsEtaGrouped_->SetXTitle("|#eta|");
   h2_coeffVsEtaGrouped_->SetYTitle("recalibCoeff");
 
-  h2_zMassVsLoop_= new TH2F("h2_zMassVsLoop","h2_zMassVsLoop",1000,0,40, 90, 80.,95.);
+  h2_zMassVsLoop_= new TH2F("h2_zMassVsLoop","h2_zMassVsLoop",1000,0,40,200,90.,120.);
 
   h2_zMassDiffVsLoop_= new TH2F("h2_zMassDiffVsLoop","h2_zMassDiffVsLoop",1000,0,40, 100, -1., 1.);
   h2_zMassDiffVsLoop_->SetXTitle("Iteration");
-  h2_zMassDiffVsLoop_->SetYTitle("M_{Z, reco peak} - M_{Z, true}");
+  h2_zMassDiffVsLoop_->SetYTitle("(M_{Z, reco peak} - M_{Z, true})/M_{Z, true}");
+
+  h2_zMassDiffAbsVsLoop_= new TH2F("h2_zMassDiffAbsVsLoop","h2_zMassDiffAbsVsLoop",1000,0,40, 100, -10., 10.);
+  h2_zMassDiffAbsVsLoop_->SetXTitle("Iteration");
+  h2_zMassDiffAbsVsLoop_->SetYTitle("M_{Z, reco peak} - M_{Z, true}");
   
   h2_zWidthVsLoop_= new TH2F("h2_zWidthVsLoop","h2_zWidthVsLoop",1000,0,40, 100, 0.,10.);
 
@@ -1508,37 +1555,47 @@ void ZeeCalibration::bookHistograms() {
   h1_mcEE_ = new TH1F("h1_residualMiscalibEE","h1_residualMiscalibEE", 200, -0.2, 0.2);
  
   for (int i=0;i<25;i++) {
-    char histoName[50];
+    char histoName[500];
     sprintf(histoName,"h1_residualMiscalibParz_%d",i);
     h1_mcParz_[i] = new TH1F(histoName,histoName, 200, -0.2, 0.2);
     sprintf(histoName,"h1_residualMiscalibEBParz_%d",i);
     h1_mcEBParz_[i] = new TH1F(histoName,histoName, 200, -0.2, 0.2);
     sprintf(histoName,"h1_residualMiscalibEEParz_%d",i);
     h1_mcEEParz_[i] = new TH1F(histoName,histoName, 200, -0.2, 0.2);
+
+    // chiara
+    sprintf(histoName,"calibCoeffBeforeBarrelParz_%d",i);
+    h1_calibCoeffBeforeBarrel_[i] = new TH1F(histoName,histoName, 200, 0., 2.);
+    sprintf(histoName,"calibCoeffAfterBarrelParz_%d",i);
+    h1_calibCoeffAfterBarrel_[i] = new TH1F(histoName,histoName, 200, 0., 2.);
+    sprintf(histoName,"initCalibCoeffBarrelParz_%d",i);
+    h1_initCalibCoeffBarrel_[i] = new TH1F(histoName,histoName, 200, 0., 2.);
+    sprintf(histoName,"h2_calibCoeffVsInitCalibCoeffBarrel_%d",i);
+    h2_calibCoeffVsInitCalibCoeffBarrel_[i] = new TH2F(histoName,histoName,100, 0.5, 1.5,200, 0., 2.);
   }
 
-  h1_deltaEta = new TH1F("h1_deltaEta","h1_deltaEta",50,-0.01,0.01);
-  h1_deltaPhi = new TH1F("h1_deltaPhi","h1_deltaPhi",50,-0.07,0.07);
-  h1_sIeIe    = new TH1F("h1_sIeIe",   "h1_sIeIe",   50,0.005,0.020);
-  h1_hoe      = new TH1F("h1_hoe",     "h1_hoe",     50,-0.15,0.15);
-  h1_eop      = new TH1F("h1_eop",     "h1_eop",     50,-0.03,0.02);
-  h1_do       = new TH1F("h1_do",      "h1_do",      50,-0.04,0.04);
-  h1_dz       = new TH1F("h1_dz",      "h1_dz",      50,-0.04,0.04);
-  h1_pfIso    = new TH1F("h1_pfIso",   "h1_pfIso",   50,0.00,2.00);
-  h1_mhits    = new TH1F("h1_mhits",   "h1_mhits",   5,-0.5,4.5);
+
+  // h1_deltaEta = new TH1F("h1_deltaEta","h1_deltaEta",50,-0.01,0.01);
+  // h1_deltaPhi = new TH1F("h1_deltaPhi","h1_deltaPhi",50,-0.07,0.07);
+  // h1_sIeIe    = new TH1F("h1_sIeIe",   "h1_sIeIe",   50,0.005,0.020);
+  // h1_hoe      = new TH1F("h1_hoe",     "h1_hoe",     50,-0.15,0.15);
+  // h1_eop      = new TH1F("h1_eop",     "h1_eop",     50,-0.03,0.02);
+  // h1_do       = new TH1F("h1_do",      "h1_do",      50,-0.04,0.04);
+  // h1_dz       = new TH1F("h1_dz",      "h1_dz",      50,-0.04,0.04);
+  // h1_pfIso    = new TH1F("h1_pfIso",   "h1_pfIso",   50,0.00,2.00);
+  // h1_mhits    = new TH1F("h1_mhits",   "h1_mhits",   5,-0.5,4.5);
   //
-  h1_afterEWK_deltaEta = new TH1F("h1_afterEWK_deltaEta","h1_afterEWK_deltaEta",50,-0.01,0.01);
-  h1_afterEWK_deltaPhi = new TH1F("h1_afterEWK_deltaPhi","h1_afterEWK_deltaPhi",50,-0.07,0.07);
-  h1_afterEWK_sIeIe    = new TH1F("h1_afterEWK_sIeIe",   "h1_afterEWK_sIeIe",   50,0.005,0.020);
-  h1_afterEWK_hoe      = new TH1F("h1_afterEWK_hoe",     "h1_afterEWK_hoe",     50,-0.15,0.15);
-  h1_afterEWK_eop      = new TH1F("h1_afterEWK_eop",     "h1_afterEWK_eop",     50,-0.03,0.02);
-  h1_afterEWK_do       = new TH1F("h1_afterEWK_do",      "h1_afterEWK_do",      50,-0.04,0.04);
-  h1_afterEWK_dz       = new TH1F("h1_afterEWK_dz",      "h1_afterEWK_dz",      50,-0.04,0.04);
-  h1_afterEWK_pfIso    = new TH1F("h1_afterEWK_pfIso",   "h1_afterEWK_pfIso",   50,0.00,2.00);
-  h1_afterEWK_mhits    = new TH1F("h1_afterEWK_mhits",   "h1_afterEWK_mhits",   5,-0.5,4.5);
+  // h1_afterEWK_deltaEta = new TH1F("h1_afterEWK_deltaEta","h1_afterEWK_deltaEta",50,-0.01,0.01);
+  // h1_afterEWK_deltaPhi = new TH1F("h1_afterEWK_deltaPhi","h1_afterEWK_deltaPhi",50,-0.07,0.07);
+  // h1_afterEWK_sIeIe    = new TH1F("h1_afterEWK_sIeIe",   "h1_afterEWK_sIeIe",   50,0.005,0.020);
+  // h1_afterEWK_hoe      = new TH1F("h1_afterEWK_hoe",     "h1_afterEWK_hoe",     50,-0.15,0.15);
+  // h1_afterEWK_eop      = new TH1F("h1_afterEWK_eop",     "h1_afterEWK_eop",     50,-0.03,0.02);
+  // h1_afterEWK_do       = new TH1F("h1_afterEWK_do",      "h1_afterEWK_do",      50,-0.04,0.04);
+  // h1_afterEWK_dz       = new TH1F("h1_afterEWK_dz",      "h1_afterEWK_dz",      50,-0.04,0.04);
+  // h1_afterEWK_pfIso    = new TH1F("h1_afterEWK_pfIso",   "h1_afterEWK_pfIso",   50,0.00,2.00);
+  // h1_afterEWK_mhits    = new TH1F("h1_afterEWK_mhits",   "h1_afterEWK_mhits",   5,-0.5,4.5);
 }
 
-// chiara: commento tutto che tanto non si usano piu'
 /*
 double ZeeCalibration::fEtaBarrelBad(double scEta) const{
   
@@ -1607,7 +1664,6 @@ int ZeeCalibration::ringNumberCorrector(int k) {
   return index;
 }
 
-// chiara: usa le funzioni fEtaXXYY. Commento tutto perche' non si usano piu' 
 /*
 double ZeeCalibration::getEtaCorrection(const reco::GsfElectron* ele){
 
@@ -1750,25 +1806,23 @@ void ZeeCalibration::resetHistograms(){
   h1_massBeforeCut_->Reset();
   h1_massAfterCut_->Reset();
   
-  h1_eventsBeforeEWKSelection_ ->Reset();
-  h1_eventsAfterEWKSelection_  ->Reset();
-  h1_eventsBeforeBorderSelection_ ->Reset();
-  h1_eventsAfterBorderSelection_  ->Reset();
+  // h1_eventsBeforeBorderSelection_ ->Reset();
+  // h1_eventsAfterBorderSelection_  ->Reset();
+
+  // for (int i=0;i<2;i++) {
+  // h_eleEffEta_[i] ->Reset();
+  // h_eleEffPhi_[i] ->Reset(); 
+  // h_eleEffPt_[i]  ->Reset();
+  // }
+
+  // h1_seedOverSC_ ->Reset();
+  // h1_preshowerOverSC_ ->Reset();
   
-  for (int i=0;i<2;i++) {
-    h_eleEffEta_[i] ->Reset();
-    h_eleEffPhi_[i] ->Reset(); 
-    h_eleEffPt_[i]  ->Reset();
-  }
+  // h1_eleEtaResol_->Reset();
+  // h1_elePhiResol_->Reset();
   
-  h1_seedOverSC_ ->Reset();
-  h1_preshowerOverSC_ ->Reset();
-  
-  h1_eleEtaResol_->Reset();
-  h1_elePhiResol_->Reset();
-  
-  h1_zMassResol_->Reset(); 
-  
+  // h1_zMassResol_->Reset(); 
+
   // h1_electronCosTheta_TK_->Reset();
   // h1_electronCosTheta_SC_->Reset();
   // h1_electronCosTheta_SC_TK_->Reset();
@@ -1786,26 +1840,26 @@ void ZeeCalibration::resetHistograms(){
   h1_occupancyBarrel_-> Reset();
   h1_occupancyEndcap_-> Reset();
 
-  h1_deltaEta -> Reset();
-  h1_deltaPhi -> Reset();
-  h1_sIeIe    -> Reset();
-  h1_hoe      -> Reset();
-  h1_eop      -> Reset();
-  h1_do       -> Reset();
-  h1_dz       -> Reset();
-  h1_pfIso    -> Reset();
-  h1_mhits    -> Reset();
+  // h1_deltaEta -> Reset();
+  // h1_deltaPhi -> Reset();
+  // h1_sIeIe    -> Reset();
+  // h1_hoe      -> Reset();
+  // h1_eop      -> Reset();
+  // h1_do       -> Reset();
+  // h1_dz       -> Reset();
+  // h1_pfIso    -> Reset();
+  // h1_mhits    -> Reset();
 
-  h1_afterEWK_deltaEta -> Reset();
-  h1_afterEWK_deltaPhi -> Reset();
-  h1_afterEWK_sIeIe    -> Reset();
-  h1_afterEWK_hoe      -> Reset();
-  h1_afterEWK_eop      -> Reset();
-  h1_afterEWK_do       -> Reset();
-  h1_afterEWK_dz       -> Reset();
-  h1_afterEWK_pfIso    -> Reset();
-  h1_afterEWK_mhits    -> Reset();
-  
+  // h1_afterEWK_deltaEta -> Reset();
+  // h1_afterEWK_deltaPhi -> Reset();
+  // h1_afterEWK_sIeIe    -> Reset();
+  // h1_afterEWK_hoe      -> Reset();
+  // h1_afterEWK_eop      -> Reset();
+  // h1_afterEWK_do       -> Reset();
+  // h1_afterEWK_dz       -> Reset();
+  // h1_afterEWK_pfIso    -> Reset();
+  // h1_afterEWK_mhits    -> Reset();
+
   return;
 }
 

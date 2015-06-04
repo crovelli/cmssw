@@ -29,6 +29,10 @@ process.maxEvents = cms.untracked.PSet(
 
 # chiara
 from Calibration.EcalCalibAlgos.DYJetsToLLPhys14SkimZee_cff import *
+#readFilesRM = cms.untracked.vstring()
+#readFilesRM.extend( [
+#        "file:fileAOD.root"
+#        ] )
 process.source = cms.Source("PoolSource",
                             fileNames = readFilesRM,
 )
@@ -36,18 +40,14 @@ process.source = cms.Source("PoolSource",
 if (not isMC):
     process.source.lumisToProcess = goodLumis                            
 
-# NOT TO BE ADDED!!!
-#process.options = cms.untracked.PSet(
-#    wantSummary = cms.untracked.bool(True)
-#)
-
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
 if (not isMC):
     process.GlobalTag.globaltag = 'GR_R_42_V17::All'    #chiara, ancora da cambiare
 else:
-    process.GlobalTag = GlobalTag(process.GlobalTag, 'PHYS14_25_V1', '') 
+    process.GlobalTag = GlobalTag(process.GlobalTag, 'PHYS14_25_V2', '') 
 
+# recalibrator
 process.load('RecoLocalCalo.EcalRecAlgos.EcalSeverityLevelESProducer_cfi')
 process.load("RecoLocalCalo.EcalRecProducers.ecalRecalibRecHit_cfi")
 process.ecalRecHit.doEnergyScale = cms.bool(False)       
@@ -90,6 +90,7 @@ process.looper.maxLoops = cms.untracked.uint32(8)              # chiara: era 7
 process.looper.electronSelection = cms.untracked.int32(-1)     # 0-1-2-3-4; -1 to do nothing
 process.looper.histoFile = cms.string('myHistograms_test.root')
 process.looper.zeeFile = cms.string('myZeePlots_test.root')
+#process.looper.initialMiscalibrationBarrel = cms.untracked.string('miscalib_ring_1.00_0.10.xml')
 process.looper.initialMiscalibrationBarrel = cms.untracked.string('')
 process.looper.initialMiscalibrationEndcap = cms.untracked.string('')
 process.looper.ZCalib_CalibType = cms.untracked.string('RING')
@@ -108,7 +109,14 @@ process.zFilterPath = cms.Path(
     process.ecalRecHit * process.ecalPreshowerRecHit * 
     process.particleFlowRecHitPS * process.particleFlowClusterPS *    
     process.particleFlowRecHitECAL * process.particleFlowClusterECALUncorrected * process.particleFlowClusterECAL *
-    process.particleFlowSuperClusterECAL )
+    process.particleFlowSuperClusterECAL 
+    )
+
+#process.out = cms.OutputModule("PoolOutputModule",
+#                               fileName = cms.untracked.string("testOut.root")
+#                               )
+#process.outpath = cms.EndPath(process.out)
+
 
 process.end_step = cms.EndPath(process.endOfProcess)
 process.Schedule = cms.Schedule(process.zFilterPath,process.end_step)

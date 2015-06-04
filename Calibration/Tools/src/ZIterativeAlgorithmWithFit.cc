@@ -143,6 +143,14 @@ void ZIterativeAlgorithmWithFit::bookHistograms() {
       thePlots_->weight[i2][i1]->GetXaxis()->SetTitle("Weight");
       thePlots_->weight[i2][i1]->GetYaxis()->SetTitle("a.u.");
     }
+
+    char histoNameZ[200];
+    char histoTitleZ[200];
+    sprintf(histoNameZ,  "WeightedZmassVsChannel_Iteration_%d",i2);
+    sprintf(histoTitleZ, "WeightedZmassVsChannel Iteration %d",i2);
+    thePlots_->weightedZmassVsChannel[i2] = new TH2F(histoNameZ, histoTitleZ, channels_, 0., channels_, 100, 40., 140.);
+    thePlots_->weightedZmassVsChannel[i2]->GetXaxis()->SetTitle("module");
+    thePlots_->weightedZmassVsChannel[i2]->GetYaxis()->SetTitle("Zmass");      
   }
 }
 
@@ -338,10 +346,11 @@ void ZIterativeAlgorithmWithFit::getWeight(unsigned int event_id, calib::CalibEl
 
 		calib_fac_[mod] += weight2 * rescale;
 		weight_sum_[mod]+= weight2;
-		
+
 		thePlots_->weightedRescaleFactor[currentIteration_][mod]->Fill(rescale,weight2);
 		thePlots_->unweightedRescaleFactor[currentIteration_][mod]->Fill(rescale,1.);
 		thePlots_->weight[currentIteration_][mod]->Fill(weight2,1.);
+		thePlots_->weightedZmassVsChannel[currentIteration_]->Fill(mod,massReco_[event_id],weight2);  // chiara
 	      }
 	      else {
 		std::cout     << "[ZIterativeAlgorithmWithFit]::[getWeight]::rescale out " << rescale << std::endl;
@@ -349,7 +358,7 @@ void ZIterativeAlgorithmWithFit::getWeight(unsigned int event_id, calib::CalibEl
 	    }
 	  }
       }
-    } 
+    }
     else 
       {
 	std::cout << "ZIterativeAlgorithmWithFit::FATAL:found a wrong module_id " << mod << " channels " << channels_ << std::endl;
