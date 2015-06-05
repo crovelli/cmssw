@@ -18,16 +18,12 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(100)
+    input = cms.untracked.int32(-1)
 )
 
-#from Calibration.EcalCalibAlgos.DYJetsToLLPhys14SkimZee_cff import *
-readFiles = cms.untracked.vstring()          
-readFiles.extend( [     
-        "/store/relval/CMSSW_7_4_2/RelValZEE_13/GEN-SIM-RECO/MCRUN2_74_V9_multiThTechTest3-v1/00000/3A4313B7-C2FF-E411-8A37-0025905B85F6.root"
-        ])
+from Calibration.EcalCalibAlgos.DYJetsToLLPhys14SkimZee_cff import *
 process.source = cms.Source("PoolSource",
-                            fileNames = readFiles,                            
+                            fileNames = readFilesRM,                            
 )
 
 if (not isMC):
@@ -36,9 +32,9 @@ if (not isMC):
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
 if (not isMC):
-    process.GlobalTag.globaltag = 'GR_P_V55' 
+    process.GlobalTag.globaltag = 'GR_P_V55' # to-be-changed
 else:
-    process.GlobalTag = GlobalTag(process.GlobalTag, 'DESRUN2_74_V4', '') 
+    process.GlobalTag = GlobalTag(process.GlobalTag, 'PHYS14_25_V2', '') 
 
 # recalibrator
 process.load('RecoLocalCalo.EcalRecAlgos.EcalSeverityLevelESProducer_cfi')
@@ -78,25 +74,24 @@ process.particleFlowSuperClusterECAL.PFBasicClusterCollectionPreshower = cms.str
 process.particleFlowSuperClusterECAL.PFSuperClusterCollectionEndcapWithPreshower = cms.string('recalibParticleFlowSuperClusterECALEndcapWithPreshower')
 
 ## chiara: algo di calibrazione vero e proprio
-#process.load("Calibration.EcalCalibAlgos.zeeCalibration_cff")
-#process.looper.maxLoops = cms.untracked.uint32(8)              # chiara: era 7
-#process.looper.electronSelection = cms.untracked.int32(-1)     # 0-1-2-3-4; -1 to do nothing
-#process.looper.histoFile = cms.string('myHistograms_test.root')
-#process.looper.zeeFile = cms.string('myZeePlots_test.root')
-##process.looper.initialMiscalibrationBarrel = cms.untracked.string('miscalib_ring_1.00_0.10.xml')
-#process.looper.initialMiscalibrationBarrel = cms.untracked.string('')
-#process.looper.initialMiscalibrationEndcap = cms.untracked.string('')
-#process.looper.ZCalib_CalibType = cms.untracked.string('RING')
-#process.looper.ZCalib_InvMass = cms.untracked.string('SCTRMass')
-## chiara: dovrebbero restare cosi'
-#process.looper.rechitProducer   = cms.string('ecalRecHit')                          
-#process.looper.rechitCollection = cms.string('EcalRecHitsEB') 
-#process.looper.erechitProducer  = cms.string('ecalRecHit')                          
-#process.looper.erechitCollection = cms.string('EcalRecHitsEE')
-#process.looper.ebSuperclusters = cms.InputTag("particleFlowSuperClusterECAL","recalibParticleFlowSuperClusterECALBarrel",processName)
-#process.looper.eeSuperclusters = cms.InputTag("particleFlowSuperClusterECAL","recalibParticleFlowSuperClusterECALEndcapWithPreshower",processName)
-#process.looper.electrons = cms.InputTag("gedGsfElectrons","","RECO")
-#process.looper.HLTriggerResults = cms.InputTag("TriggerResults","",HLTProcessName)    
+process.load("Calibration.EcalCalibAlgos.zeeCalibration_cff")
+process.looper.maxLoops = cms.untracked.uint32(7) 
+process.looper.electronSelection = cms.untracked.int32(-1)     # 0-1-2-3-4; -1 to do nothing
+process.looper.histoFile = cms.string('myHistograms_test.root')
+process.looper.zeeFile = cms.string('myZeePlots_test.root')
+process.looper.initialMiscalibrationBarrel = cms.untracked.string('')
+process.looper.initialMiscalibrationEndcap = cms.untracked.string('')
+process.looper.ZCalib_CalibType = cms.untracked.string('RING')
+process.looper.ZCalib_InvMass = cms.untracked.string('SCTRMass')
+# chiara: dovrebbero restare cosi'
+process.looper.rechitProducer   = cms.string('ecalRecHit')                          
+process.looper.rechitCollection = cms.string('EcalRecHitsEB') 
+process.looper.erechitProducer  = cms.string('ecalRecHit')                          
+process.looper.erechitCollection = cms.string('EcalRecHitsEE')
+process.looper.ebSuperclusters = cms.InputTag("particleFlowSuperClusterECAL","recalibParticleFlowSuperClusterECALBarrel",processName)
+process.looper.eeSuperclusters = cms.InputTag("particleFlowSuperClusterECAL","recalibParticleFlowSuperClusterECALEndcapWithPreshower",processName)
+process.looper.electrons = cms.InputTag("gedGsfElectrons","","RECO")
+process.looper.HLTriggerResults = cms.InputTag("TriggerResults","",HLTProcessName)    
 
 process.zFilterPath = cms.Path( 
     process.ecalRecHit * process.ecalPreshowerRecHit * 
