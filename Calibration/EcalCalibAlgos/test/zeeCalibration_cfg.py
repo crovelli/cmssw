@@ -24,24 +24,32 @@ process.maxEvents = cms.untracked.PSet(
 )
 
 #relvals
+#from Calibration.EcalCalibAlgos.RelVal_zEl2012D_cff import *
+#process.source = cms.Source("PoolSource",
+#                            fileNames = readFiles,
+#)
 process.source = cms.Source("PoolSource", 
                             fileNames=cms.untracked.vstring(    
-        #"/store/relval/CMSSW_7_4_2/RelValZEE_13/GEN-SIM-RECO/MCRUN2_74_V9_multiThTechTest3-v1/00000/3A4313B7-C2FF-E411-8A37-0025905B85F6.root"    
+        #        "/store/relval/CMSSW_7_4_2/RelValZEE_13/GEN-SIM-RECO/MCRUN2_74_V9_multiThTechTest3-v1/00000/3A4313B7-C2FF-E411-8A37-0025905B85F6.root"    
         #
         # 2012D Zee relval  - miniAOD
         #"/store/relval/CMSSW_7_4_2/DoubleElectron/MINIAOD/GR_R_74_V12_19May_RelVal_zEl2012D-v1/00000/2A301BBB-94FE-E411-87D7-0025905A48F2.root",
-        #"/store/relval/CMSSW_7_4_2/DoubleElectron/MINIAOD/GR_R_74_V12_19May_RelVal_zEl2012D-v1/00000/6E6BA0BB-94FE-E411-8900-002354EF3BE0.root",
-        #"/store/relval/CMSSW_7_4_2/DoubleElectron/MINIAOD/GR_R_74_V12_19May_RelVal_zEl2012D-v1/00000/9299FCE5-89FE-E411-A75F-002618FDA277.root",
-        #"/store/relval/CMSSW_7_4_2/DoubleElectron/MINIAOD/GR_R_74_V12_19May_RelVal_zEl2012D-v1/00000/A2FDAC2B-89FE-E411-A6A6-003048FFD736.root"
-        # 
-        # 2012D Zee relval  - reco by me from RAW
-        "file:anOutputFileName.root"
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_0.root",
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_all1.root",
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_all2.root",
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_all3.root",
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_all4.root",
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_all5.root",
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_all6.root",
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_all7.root",
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_all8.root",
+        "file:/cmsrm/pc29_2/crovelli/Calib/relval472/RECOandSkimNoId/GR_R_74_V12_19May_RelVal_zEl2012D-v1/GR_R_74_V12_19May_RelVal_zEl2012D-v1_all9.root"
         )     
                             )    
 
-#from Calibration.EcalCalibAlgos.CertRelVals_cff import *
-#if (not isMC):
-#    process.source.lumisToProcess = goodLumis                            
+from Calibration.EcalCalibAlgos.CertRelVals8TeV_22Jan2013ReReco_cff import *
+if (not isMC):
+    process.source.lumisToProcess = goodLumis                            
 
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
@@ -92,7 +100,7 @@ process.particleFlowSuperClusterECAL.PFSuperClusterCollectionEndcapWithPreshower
 
 # calibration algo
 process.load("Calibration.EcalCalibAlgos.zeeCalibration_cff")
-process.looper.maxLoops = cms.untracked.uint32(1)              
+process.looper.maxLoops = cms.untracked.uint32(8)              
 process.looper.electronSelection = cms.untracked.int32(-1)     # 0-1-2-3-4; -1 to do nothing
 process.looper.histoFile = cms.string('myHistograms_test.root')
 process.looper.zeeFile = cms.string('myZeePlots_test.root')
