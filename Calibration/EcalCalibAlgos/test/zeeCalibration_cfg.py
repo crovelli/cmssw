@@ -20,7 +20,7 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1)
+    input = cms.untracked.int32(1)
 )
 
 #relvals
@@ -30,7 +30,7 @@ process.maxEvents = cms.untracked.PSet(
 #)
 process.source = cms.Source("PoolSource", 
                             fileNames=cms.untracked.vstring(    
-        #        "/store/relval/CMSSW_7_4_2/RelValZEE_13/GEN-SIM-RECO/MCRUN2_74_V9_multiThTechTest3-v1/00000/3A4313B7-C2FF-E411-8A37-0025905B85F6.root"    
+        # "/store/relval/CMSSW_7_4_2/RelValZEE_13/GEN-SIM-RECO/MCRUN2_74_V9_multiThTechTest3-v1/00000/3A4313B7-C2FF-E411-8A37-0025905B85F6.root"    
         #
         # 2012D Zee relval  - miniAOD
         #"/store/relval/CMSSW_7_4_2/DoubleElectron/MINIAOD/GR_R_74_V12_19May_RelVal_zEl2012D-v1/00000/2A301BBB-94FE-E411-87D7-0025905A48F2.root",
@@ -54,8 +54,8 @@ if (not isMC):
 # Other statements
 from Configuration.AlCa.GlobalTag import GlobalTag
 if (not isMC):
-    #process.GlobalTag.globaltag = 'GR_P_V55' 
-    process.GlobalTag.globaltag = 'GR_R_74_V12'
+    #process.GlobalTag.globaltag = 'GR_P_V56'               # prompt reco
+    process.GlobalTag.globaltag = 'GR_R_74_V12'             # relval dati
 else:
     process.GlobalTag = GlobalTag(process.GlobalTag, 'DESRUN2_74_V4', '') 
 
@@ -68,9 +68,8 @@ process.ecalRecHit.doLaserCorrection = cms.bool(False)
 process.ecalRecHit.EBRecHitCollection = "reducedEcalRecHitsEB"  
 process.ecalRecHit.EERecHitCollection = "reducedEcalRecHitsEE"          
 process.ecalRecHit.EBRecalibRecHitCollection = "EcalRecHitsEB"          # chiara: e' la collezione di output
-                                                                        # si chiamano EcalRecHitsEB ma sono reduced. Da capire 
-process.ecalRecHit.EERecalibRecHitCollection = "EcalRecHitsEE"          # quale formato ci sara'. Inoltre, considera che il PF dopo
-                                                                        # avrebbe bisogno i non reduced! che sono usati in
+                                                                        # si chiamano EcalRecHitsEB ma sono reduced. 
+process.ecalRecHit.EERecalibRecHitCollection = "EcalRecHitsEE"          # Il PF avrebbe bisogno i non reduced! che sono usati in
                                                                         # RecoParticleFlow/PFClusterProducer/interface/PFEcalRecHitCreator.h
 # chiara:
 # non so come cambiare il nome alla collezione di rechits reduced che deve diventare EcalRecHitsES invece di reducedEcalRecHitsES         
@@ -107,8 +106,10 @@ process.looper.zeeFile = cms.string('myZeePlots_test.root')
 #process.looper.initialMiscalibrationBarrel = cms.untracked.string('miscalib_ring_1.00_0.10.xml')
 process.looper.initialMiscalibrationBarrel = cms.untracked.string('')
 process.looper.initialMiscalibrationEndcap = cms.untracked.string('')
-process.looper.ZCalib_CalibType = cms.untracked.string('RING')
+process.looper.ZCalib_CalibType = cms.untracked.string('SINGLEXTAL')
+#process.looper.ZCalib_CalibType = cms.untracked.string('RING')
 process.looper.ZCalib_InvMass = cms.untracked.string('SCTRMass')
+process.looper.ZCalib_nCrystalCut = cms.untracked.int32(-1)        # -1: not exclude any crystal from calib; 1: to exclude only the xtal at border
 # not to be changed
 process.looper.rechitProducer   = cms.string('ecalRecHit')                          
 process.looper.rechitCollection = cms.string('EcalRecHitsEB') 
