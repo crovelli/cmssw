@@ -117,6 +117,7 @@ ZeeCalibration::ZeeCalibration(const edm::ParameterSet& iConfig) {
   etMax_   = iConfig.getUntrackedParameter<double>("etMax", 100.);   
 
   calibMode_ = iConfig.getUntrackedParameter<std::string>("ZCalib_CalibType");
+  numCrystalCut_ = iConfig.getUntrackedParameter<int>("ZCalib_nCrystalCut");
  
   // collections
   rechitProducer_    = iConfig.getParameter<std::string>("rechitProducer");
@@ -159,7 +160,7 @@ ZeeCalibration::ZeeCalibration(const edm::ParameterSet& iConfig) {
   EcalIndexingTools* myIndexTool=0;
   myIndexTool = EcalIndexingTools::getInstance();  
   myIndexTool->setBinRange( etaBins_, etaMin_, etaMax_, etBins_, etMin_, etMax_ );
-  
+
   // creating the algorithm
   theAlgorithm_ = new ZIterativeAlgorithmWithFit(iConfig);
   
@@ -200,13 +201,13 @@ void ZeeCalibration::beginOfJob(edm::EventSetup const& iSetup) {
 
   if (isfirstcall_){
 
+    loopFlag_ = 0;
+
     // loading ecal geometry
     edm::ESHandle<CaloGeometry> pG;
     iSetup.get<CaloGeometryRecord>().get(pG);     
     EcalRingCalibrationTools::setCaloGeometry(&(*pG));  
     
-    loopFlag_ = 0;
-
     // Read miscalibration map if requested
     CaloMiscalibMapEcal* miscalibMap=0;
     if (!barrelfile_.empty() || !endcapfile_.empty()) {
@@ -231,67 +232,129 @@ void ZeeCalibration::beginOfJob(edm::EventSetup const& iSetup) {
     }
     
 #ifdef DEBUG
-    std::cout << "TheAlgorithm_->getNumberOfChannels() " << theAlgorithm_->getNumberOfChannels() << std::endl;
+    std::cout << "TheAlgorithm_->getNumberOfChannels() " << theAlgorithm_->getNumberOfChannels() << std::endl;   
 #endif
 
-    for(int k = 0; k < theAlgorithm_->getNumberOfChannels(); k++) {
-      
-      calibCoeff[k]=1.;
-      calibCoeffError[k]=0.;
-      
-      std::vector<DetId> ringIds;
-      if(calibMode_ == "RING")   ringIds = EcalRingCalibrationTools::getDetIdsInRing(k);
-      if(calibMode_ == "MODULE") ringIds = EcalRingCalibrationTools::getDetIdsInModule(k);
-      if(calibMode_ == "ABS_SCALE" || calibMode_ == "ETA_ET_MODE" ) ringIds = EcalRingCalibrationTools::getDetIdsInECAL();
-      
-      // set miscalibration
-      if (miscalibMap) {
-	initCalibCoeff[k]=0.;	      
-	for (unsigned int iid=0; iid<ringIds.size();++iid) {
-	  float miscalib=* (miscalibMap->get().getMap().find(ringIds[iid])  );
-	  initCalibCoeff[k]+=miscalib;
-	}
-	initCalibCoeff[k]/=(float)ringIds.size();
+    // Set miscalibration
+    if(calibMode_ == "RING" || calibMode_ == "MODULE" || calibMode_ == "ABS_SCALE" || calibMode_ == "ETA_ET_MODE") {
 
-#ifdef DEBUG
-	std::cout << k << " " << initCalibCoeff[k] << " " << ringIds.size() << std::endl;
-#endif
-      }
-      else {
-	initCalibCoeff[k]=1.;
-      }
-    }
-    
-    ical = boost::shared_ptr<EcalIntercalibConstants>( new EcalIntercalibConstants() );
-    
-    for(int k = 0; k < theAlgorithm_->getNumberOfChannels(); k++) {
-      
-      std::vector<DetId> ringIds;
-      if(calibMode_ == "RING")   ringIds = EcalRingCalibrationTools::getDetIdsInRing(k);
-      if(calibMode_ == "MODULE") ringIds = EcalRingCalibrationTools::getDetIdsInModule(k);
-      if(calibMode_ == "ABS_SCALE" || calibMode_ == "ETA_ET_MODE") ringIds = EcalRingCalibrationTools::getDetIdsInECAL();
-      
-      for (unsigned int iid=0; iid<ringIds.size();++iid) {
+      for(int k = 0; k < theAlgorithm_->getNumberOfChannels(); k++) {
 	
-	if (miscalibMap) {  
-	  if(ringIds[iid].subdetId() == EcalBarrel){
-	    EBDetId myEBDetId(ringIds[iid]);  
-	    h2_xtalMiscalibCoeffBarrel_->SetBinContent( myEBDetId.ieta() + 86, myEBDetId.iphi(), * (miscalibMap->get().getMap().find(ringIds[iid]) ) );
+	calibCoeff[k]=1.;
+	calibCoeffError[k]=0.;
+	
+	std::vector<DetId> ringIds;        
+	if(calibMode_ == "RING")   ringIds = EcalRingCalibrationTools::getDetIdsInRing(k);
+	if(calibMode_ == "MODULE") ringIds = EcalRingCalibrationTools::getDetIdsInModule(k);
+	if(calibMode_ == "ABS_SCALE" || calibMode_ == "ETA_ET_MODE" ) ringIds = EcalRingCalibrationTools::getDetIdsInECAL();
+      
+	if (miscalibMap) {
+	  initCalibCoeff[k]=0.;	      
+	  for (unsigned int iid=0; iid<ringIds.size();++iid) {
+	    float miscalib=* (miscalibMap->get().getMap().find(ringIds[iid])  );
+	    initCalibCoeff[k]+=miscalib;
 	  }
-	  if(ringIds[iid].subdetId() == EcalEndcap){
-	    EEDetId myEEDetId(ringIds[iid]);
-	    if(myEEDetId.zside() < 0)
-	      h2_xtalMiscalibCoeffEndcapMinus_->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), * ( miscalibMap->get().getMap().find(ringIds[iid]) ) );
-	    if(myEEDetId.zside() > 0)
-	      h2_xtalMiscalibCoeffEndcapPlus_->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), * (miscalibMap->get().getMap().find(ringIds[iid]) ) );
-	  }
-	  ical->setValue( ringIds[iid], *(miscalibMap->get().getMap().find(ringIds[iid])  ) );
+	  initCalibCoeff[k]/=(float)ringIds.size();
 	} else {
-	  ical->setValue( ringIds[iid], 1. );
+	  initCalibCoeff[k]=1.;
 	}
+      }
+
+    } else if (calibMode_ == "SINGLEXTAL") {
+      
+      // association between ringindex and hashed index - needed later 
+      HashedToRingIndexMap = EcalRingCalibrationTools::HashedToRingIndex();
+      cout << "size = " << HashedToRingIndexMap.size() << endl;
+
+      std::vector<DetId> ringIds = EcalRingCalibrationTools::getOrderedDetIdsInECAL(); 
+
+      for(int k = 0; k < theAlgorithm_->getNumberOfChannels(); k++) {
+	
+	calibCoeff[k]=1.;
+	calibCoeffError[k]=0.;
+	
+	if (miscalibMap) {
+	  initCalibCoeff[k]=0.;	      
+	  float miscalib=* (miscalibMap->get().getMap().find(ringIds[k])  );
+	  initCalibCoeff[k]=miscalib;
+	} else {
+	  initCalibCoeff[k]=1.;
+	}
+
+	// if(ringIds[k].subdetId() == EcalBarrel){ 
+	// if (k%1000==0) cout << "filling: " << ((EBDetId)ringIds[k]).ieta() << " " << ((EBDetId)ringIds[k]).iphi() << " " << initCalibCoeff[k] << endl;
+	// } else {
+	// if (k%1000==0) cout << "filling: " << ((EEDetId)ringIds[k]).ix() << " " << ((EEDetId)ringIds[k]).iy() << " " << ((EEDetId)ringIds[k]).zside() << " " << initCalibCoeff[k] << endl;
+	// }
       }
     }
     
+    // IC constants
+    ical = boost::shared_ptr<EcalIntercalibConstants>( new EcalIntercalibConstants() );
+
+    // Set miscalibration 
+    if (calibMode_ == "RING" || calibMode_ == "MODULE" || calibMode_ == "ABS_SCALE" || calibMode_ == "ETA_ET_MODE") {
+
+      for(int k = 0; k < theAlgorithm_->getNumberOfChannels(); k++) {      
+      
+	std::vector<DetId> ringIds;
+	if(calibMode_ == "RING")   ringIds = EcalRingCalibrationTools::getDetIdsInRing(k);
+	if(calibMode_ == "MODULE") ringIds = EcalRingCalibrationTools::getDetIdsInModule(k);
+	if(calibMode_ == "ABS_SCALE" || calibMode_ == "ETA_ET_MODE") ringIds = EcalRingCalibrationTools::getDetIdsInECAL(); 
+    
+	for (unsigned int iid=0; iid<ringIds.size();++iid) {
+	
+	  if (miscalibMap) {  
+	    if(ringIds[iid].subdetId() == EcalBarrel){
+	      EBDetId myEBDetId(ringIds[iid]);  
+	      h2_xtalMiscalibCoeffBarrel_->SetBinContent( myEBDetId.ieta() + 86, myEBDetId.iphi(), * (miscalibMap->get().getMap().find(ringIds[iid]) ) );
+	    }
+	    if(ringIds[iid].subdetId() == EcalEndcap){
+	      EEDetId myEEDetId(ringIds[iid]);
+	      if(myEEDetId.zside() < 0)
+		h2_xtalMiscalibCoeffEndcapMinus_->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), * ( miscalibMap->get().getMap().find(ringIds[iid]) ) );
+	      if(myEEDetId.zside() > 0)
+		h2_xtalMiscalibCoeffEndcapPlus_->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), * (miscalibMap->get().getMap().find(ringIds[iid]) ) );
+	    }
+	    ical->setValue( ringIds[iid], *(miscalibMap->get().getMap().find(ringIds[iid])  ) );
+	  } else {
+	    ical->setValue( ringIds[iid], 1. );
+	  }
+	}
+      }
+
+    } else if (calibMode_ == "SINGLEXTAL") {  // Here we loop over crystals
+
+      std::vector<DetId> ringIds = EcalRingCalibrationTools::getOrderedDetIdsInECAL();  
+      
+      for(int k = 0; k < theAlgorithm_->getNumberOfChannels(); k++) {      
+
+	if (miscalibMap) {  
+	  if(ringIds[k].subdetId() == EcalBarrel){
+	    EBDetId myEBDetId(ringIds[k]);  
+	    h2_xtalMiscalibCoeffBarrel_->SetBinContent( myEBDetId.ieta() + 86, myEBDetId.iphi(), * (miscalibMap->get().getMap().find(ringIds[k]) ) );
+	  }
+	  if(ringIds[k].subdetId() == EcalEndcap){
+	    EEDetId myEEDetId(ringIds[k]);
+	    if(myEEDetId.zside() < 0)
+	      h2_xtalMiscalibCoeffEndcapMinus_->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), * ( miscalibMap->get().getMap().find(ringIds[k]) ) );
+	    if(myEEDetId.zside() > 0)
+	      h2_xtalMiscalibCoeffEndcapPlus_->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), * (miscalibMap->get().getMap().find(ringIds[k]) ) );
+	  }
+	  ical->setValue( ringIds[k], *(miscalibMap->get().getMap().find(ringIds[k])  ) );
+	} else {
+	  ical->setValue( ringIds[k], 1. );
+	}
+
+	// if(ringIds[k].subdetId() == EcalBarrel){ 
+	// if (k%1000==0) cout << "checking: " << ((EBDetId)ringIds[k]).ieta() << " " << ((EBDetId)ringIds[k]).iphi() << " " << *(miscalibMap->get().getMap().find(ringIds[k])) << endl;
+	// } else {
+	// if (k%1000==0) cout << "checking: " << ((EEDetId)ringIds[k]).ix() << " " << ((EEDetId)ringIds[k]).iy() << " " << ((EEDetId)ringIds[k]).zside() << " " << *(miscalibMap->get().getMap().find(ringIds[k])) << endl;
+	// }
+
+      }
+    }
+
     read_events = 0;
     init_ = false;
     isfirstcall_=false;
@@ -312,7 +375,7 @@ void ZeeCalibration::endOfJob() {
 
   printStatistics();
   
-  if(calibMode_ != "ETA_ET_MODE") {
+  if(calibMode_ != "ETA_ET_MODE") {         
 
     // Writing out calibration coefficients
     calibXMLwriter* barrelWriter = new calibXMLwriter(EcalBarrel);
@@ -346,6 +409,8 @@ void ZeeCalibration::endOfJob() {
   std::cout<<"Writing  histos..."<<std::endl;
 #endif
 
+
+  // histograms
   outputFile_->cd();
 
   h1_Selection_ ->Write();   
@@ -427,13 +492,13 @@ void ZeeCalibration::endOfJob() {
 
   int j = 0;
   int flag=0;
-  
-  Double_t mean[25] = {0.};
+
+  Double_t mean[25] = {0.};         // 25 groups of 5x5 rings
   Double_t num[25]  = {0.};
   Double_t meanErr[25] = {0.};
   Float_t rms[25] = {0.};
-  Float_t tempRms[10][25];
-  
+
+  Float_t tempRms[10][25];   
   for(int ia = 0; ia<10; ia++){
     for(int ib = 0; ib<25; ib++){
       tempRms[ia][ib] = 0.;
@@ -442,21 +507,24 @@ void ZeeCalibration::endOfJob() {
     
   int aa = 0;
 
-  for( int k = 0; k<theAlgorithm_->getNumberOfChannels(); k++ ) {
-      
-    // grouped
+  // grouped xtals plots 
+  for( int k = 0; k<theAlgorithm_->getNumberOfChannels(); k++ ) {       
+
     bool isNearCrack = false;    
-    if( calibMode_ == "RING"){
-      isNearCrack = ( abs( ringNumberCorrector(k) ) == 1 || abs( ringNumberCorrector(k) ) == 25 ||
-		      abs( ringNumberCorrector(k) ) == 26 || abs( ringNumberCorrector(k) ) == 45 ||
-		      abs( ringNumberCorrector(k) ) == 46 || abs( ringNumberCorrector(k) ) == 65 ||
-		      abs( ringNumberCorrector(k) ) == 66 || abs( ringNumberCorrector(k) ) == 85 ||
-		      abs( ringNumberCorrector(k) ) == 86 || abs( ringNumberCorrector(k) ) == 124 );
-    }
+    isNearCrack = ( abs( ringNumberCorrector(k) ) == 1 || abs( ringNumberCorrector(k) ) == 25 ||
+		    abs( ringNumberCorrector(k) ) == 26 || abs( ringNumberCorrector(k) ) == 45 ||
+		    abs( ringNumberCorrector(k) ) == 46 || abs( ringNumberCorrector(k) ) == 65 ||
+		    abs( ringNumberCorrector(k) ) == 66 || abs( ringNumberCorrector(k) ) == 85 ||
+		    abs( ringNumberCorrector(k) ) == 86 || abs( ringNumberCorrector(k) ) == 124 );
+
     
-    if(k<85) {
+    int newk = k;        // this is to use the same crystals grouping as for the ring case    
+    if (calibMode_ == "SINGLEXTAL") 
+      newk = (HashedToRingIndexMap.find(k))->second;  
+
+    if(newk<85) {   // EB+ and fill also for EB-
       
-      if((k+1)%5!=0) {
+      if((newk+1)%5!=0) {   // groups of 5 rings
 	
 	if(!isNearCrack){
 	  mean[j]+=calibCoeff[k];
@@ -496,10 +564,10 @@ void ZeeCalibration::endOfJob() {
     }
     
     // EE begin
-    if(k>=170 && k<=204){
+    if(newk>=170 && newk<=204){
 	
-      if(flag<4){
-	//make groups of 5 Xtals in #eta
+      if(flag<4){  //make groups of 5 Xtals in #eta
+	
 	mean[j]+=calibCoeff[k]/10.;
 	mean[j]+=calibCoeff[k+39]/10.;
 	
@@ -513,9 +581,8 @@ void ZeeCalibration::endOfJob() {
 	
 	flag++;
 
-      } else if(flag==4){
-      
-	//make groups of 5 Xtals in #eta
+      } else if(flag==4){  //make groups of 5 Xtals in #eta
+       	
 	mean[j]+=calibCoeff[k]/10.;
 	mean[j]+=calibCoeff[k+39]/10.;
 
@@ -533,7 +600,7 @@ void ZeeCalibration::endOfJob() {
       }	
     } 
     
-    if(k>=205 && k<=208) {
+    if(newk>=205 && newk<=208) {
 
       mean[j]+=calibCoeff[k]/8.;
       mean[j]+=calibCoeff[k+39]/8.;
@@ -547,29 +614,36 @@ void ZeeCalibration::endOfJob() {
       aa++;
     }
     // EE end
-  
-    if(!isNearCrack){
+
+    // For ring calibration I leave everything as it was 
+    // For single xtal calibration I give the choice to exclude (numCrystalCut_>=0) or not (-1) border xtals
+    bool toBeFilled = false;
+    if( calibMode_ == "RING" && !isNearCrack) toBeFilled = true;
+    if( calibMode_ == "SINGLEXTAL" && (numCrystalCut_<0 || !isNearCrack) ) toBeFilled = true;  
+    if( calibMode_ != "RING" && calibMode_ != "SINGLEXTAL" ) toBeFilled = true;
+
+    if( toBeFilled ){
       h2_coeffVsEta_->Fill( ringNumberCorrector(k), calibCoeff[k] );
       h2_miscalRecal_->Fill( initCalibCoeff[k], 1./calibCoeff[k] );
       h1_mc_->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
 	
-      if(k<170){
+      if(newk<170){
 	h2_miscalRecalEB_->Fill( initCalibCoeff[k], 1./calibCoeff[k] );
 	h1_mcEB_->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
       }
 	
-      if(k>=170){
+      if(newk>=170){
 	h2_miscalRecalEE_->Fill( initCalibCoeff[k], 1./calibCoeff[k] );
 	h1_mcEE_->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
       }    
     }
+
   }   // end loop over channels
   
-
+  // find mean of recalib coeff on group of rings (even for single xtals I leave groups of 5x5 rings)
   for(int ic = 0; ic< 17; ic++){
-    mean[ic] = mean[ic] / num[ic];      //find mean of recalib coeff on group of rings
-    //meanErr[ic] = meanErr[ic] / ( sqrt( num[ic] ) * num[ic] ); //find mean of recalib coeff on group of rings
-    meanErr[ic] = 1. / sqrt(meanErr[ic]); //find mean of recalib coeff on group of rings
+    mean[ic] = mean[ic] / num[ic];          // find mean of recalib coeff on group of rings
+    meanErr[ic] = 1. / sqrt(meanErr[ic]); 
   }
 
   // build array of RMS
@@ -580,7 +654,7 @@ void ZeeCalibration::endOfJob() {
 	rms[ic] += (tempRms[id][ic] - mean[j])*(tempRms[id][ic] - mean[j]);
       }
     }
-    rms[ic]/= 10.;//this is approximate
+    rms[ic]/= 10.;     //this is approximate
     rms[ic] = sqrt(rms[ic]);
   }
   
@@ -628,33 +702,58 @@ void ZeeCalibration::endOfJob() {
     for (int iChannel=0;iChannel<theAlgorithm_->getNumberOfChannels();iChannel++) {
 
       if( iIteration==(theAlgorithm_->getNumberOfIterations()-1) ){
-	
-	if(iChannel < 170)
-	  weightSumMeanBarrel += algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral()/170.; 
-	
-	if(iChannel >= 170)
-	  weightSumMeanEndcap += algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral()/78.; 
-	
+
+	if (calibMode_ != "SINGLEXTAL") {
+
+	  if(iChannel < 170)   
+	    weightSumMeanBarrel += algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral()/170.; 
+	  
+	  if(iChannel >= 170) 
+	    weightSumMeanEndcap += algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral()/78.; 
+
+	} else {
+
+	  float nXtalEB = (float)N_XTAL_BARREL;
+	  float nXtalEE = (float)N_XTAL_ENDCAP;
+
+	  if(iChannel < N_XTAL_BARREL)  
+	    weightSumMeanBarrel += algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral()/nXtalEB; 
+	  
+	  if(iChannel >= N_XTAL_BARREL) 
+	    weightSumMeanEndcap += algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral()/nXtalEE; 
+	}
+
 	h1_occupancyVsEta_->Fill((Double_t)ringNumberCorrector(iChannel), algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral() );
 	
 	h1_occupancy_->Fill( algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral() );
 	
-	if(iChannel < 170)
-	  h1_occupancyBarrel_->Fill( algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral() );
-	
-	if(iChannel >= 170)
-	  h1_occupancyEndcap_->Fill( algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral() );
-	
+	if (calibMode_ != "SINGLEXTAL") {
+
+	  if(iChannel < 170)  
+	    h1_occupancyBarrel_->Fill( algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral() );
+	  
+	  if(iChannel >= 170) 
+	    h1_occupancyEndcap_->Fill( algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral() );
+	  
+	} else {
+
+	  if(iChannel < N_XTAL_BARREL)  
+	    h1_occupancyBarrel_->Fill( algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral() );
+	  
+	  if(iChannel >= N_XTAL_BARREL) 
+	    h1_occupancyEndcap_->Fill( algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral() );
+	}
+
 #ifdef DEBUG
 	std::cout<<"Writing weighted integral for channel "<<ringNumberCorrector(iChannel)<<" ,value "<<algoHistos->weightedRescaleFactor[iIteration][iChannel]->Integral()<<std::endl;
 #endif
 	
       }
     }
-  
+
   h1_weightSumMeanBarrel_ ->Fill(weightSumMeanBarrel);
   h1_weightSumMeanEndcap_ ->Fill(weightSumMeanEndcap);
-
+  
 #ifdef DEBUG  
   std::cout<<"Weight sum mean on channels in Barrel is :"<<weightSumMeanBarrel<<std::endl;
   std::cout<<"Weight sum mean on channels in Endcap is :"<<weightSumMeanEndcap<<std::endl;
@@ -670,12 +769,13 @@ void ZeeCalibration::endOfJob() {
 
   myTree->Write();
 
-  TGraphErrors* graph = new TGraphErrors(25,xtalEta,mean,zero,meanErr);
+
+  // This is done in groups of rings as above
+  TGraphErrors* graph = new TGraphErrors(25, xtalEta, mean, zero, meanErr);
   graph->Draw("APL");
   graph->Write();
 
   double zero50[50] = { 0. };
-
   TGraphErrors* residualSigmaGraph = new TGraphErrors(50,loopArray,sigmaArray,zero50,sigmaErrorArray);
   residualSigmaGraph->SetName("residualSigmaGraph");
   residualSigmaGraph->Draw("APL");
@@ -685,13 +785,10 @@ void ZeeCalibration::endOfJob() {
   coefficientDistanceAtIterationGraph->SetName("coefficientDistanceAtIterationGraph");
   coefficientDistanceAtIterationGraph->Draw("APL");
   coefficientDistanceAtIterationGraph->Write();
-  
-  Float_t noError[250] = {0.};
-  
-  Float_t ringInd[250];
-  for(int i =0; i<250; i++)
-    ringInd[i]=ringNumberCorrector(i);
 
+  Float_t noError[N_XTAL_TOTAL] = {0.};
+  Float_t ringInd[N_XTAL_TOTAL];
+  for(int i =0; i<theAlgorithm_->getNumberOfChannels(); i++) ringInd[i]=ringNumberCorrector(i);  
   TGraphErrors* graphCoeff = new TGraphErrors(theAlgorithm_->getNumberOfChannels(),ringInd,calibCoeff,noError,calibCoeffError);
   graphCoeff->SetName("graphCoeff");
   graphCoeff->Draw("APL");
@@ -714,7 +811,7 @@ void ZeeCalibration::endOfJob() {
     
   myZeeRescaleFactorPlots_ = new ZeeRescaleFactorPlots("zeeRescaleFactorPlots.root");
   myZeeRescaleFactorPlots_->writeHistograms( theAlgorithm_ );
-  //  delete myZeeRescaleFactorPlots_;         // chiara: sicuri che non va acceso?
+  //  delete myZeeRescaleFactorPlots_;         
 
 #ifdef DEBUG
   std::cout<<"[ZeeCalibration] endOfJob done"<<std::endl;
@@ -879,29 +976,26 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
     const reco::SuperCluster* sc=0;
 
     // loop on EB superClusters   
-    if(eleIt->isEB()) 
-      {   // chiara: gap EB/EE excluded
-	for(reco::SuperClusterCollection::const_iterator scEbIt = ebScCollection->begin(); scEbIt != ebScCollection->end(); scEbIt++) 
-	  {
-	    double DeltaReleSC = deltaR(eleIt->parentSuperCluster()->eta(),eleIt->parentSuperCluster()->phi(),scEbIt->eta(),scEbIt->phi());
-	      if(DeltaReleSC<DeltaRMineleSCbarrel) 
-		{
-		  DeltaRMineleSCbarrel = DeltaReleSC;
-		  sc=&(*scEbIt);
-		} 
-	  }
-      } 
-    else if(eleIt->isEE()) 
-      {   // chiara: gap EB/EE excluded
-	for(reco::SuperClusterCollection::const_iterator scEeIt = eeScCollection->begin(); scEeIt != eeScCollection->end(); scEeIt++){
-	  double DeltaReleSC = deltaR(eleIt->parentSuperCluster()->eta(),eleIt->parentSuperCluster()->phi(),scEeIt->eta(),scEeIt->phi());
-	  if(DeltaReleSC<DeltaRMineleSCendcap) {
-	    DeltaRMineleSCendcap = DeltaReleSC;
-	    sc = &(*scEeIt);
-	  }
+    if(eleIt->isEB()) {
+      for(reco::SuperClusterCollection::const_iterator scEbIt = ebScCollection->begin(); scEbIt != ebScCollection->end(); scEbIt++) {
+	double DeltaReleSC = deltaR(eleIt->parentSuperCluster()->eta(),eleIt->parentSuperCluster()->phi(),scEbIt->eta(),scEbIt->phi());
+	if(DeltaReleSC<DeltaRMineleSCbarrel) {
+	  DeltaRMineleSCbarrel = DeltaReleSC;
+	  sc=&(*scEbIt);
+	} 
+      }
+    } 
+    else if(eleIt->isEE()) {
+      for(reco::SuperClusterCollection::const_iterator scEeIt = eeScCollection->begin(); scEeIt != eeScCollection->end(); scEeIt++) {
+	double DeltaReleSC = deltaR(eleIt->parentSuperCluster()->eta(),eleIt->parentSuperCluster()->phi(),scEeIt->eta(),scEeIt->phi());
+	if(DeltaReleSC<DeltaRMineleSCendcap) {
+	  DeltaRMineleSCendcap = DeltaReleSC;
+	  sc = &(*scEeIt);
 	}
       }
+    }
     
+    // chiara: gap EB/EE excluded
     if(!sc) continue;
 
     calibElectrons.push_back(calib::CalibElectron(&(*eleIt),sc,hits,ehits));
@@ -949,7 +1043,7 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
       // when selecting the same SC for the two electrons I drop the event 
       if (calibElectrons[e_it].getParentSuperCluster() == calibElectrons[p_it].getParentSuperCluster()) continue;
 
-      // chiara: bisogna capire in 72x che correzioni sono applicate a ele->sc->energy
+      // invariant mass
       mass = ZeeKinematicTools::calculateZMass_withTK(std::pair<calib::CalibElectron*,calib::CalibElectron*>(&(calibElectrons[e_it]),&(calibElectrons[p_it])));
 
       if (mass<0) continue;
@@ -966,7 +1060,7 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
       }
     }
   }      
-  
+
   h1_ZCandMult_->Fill(zeeCandidates.size());
 
   if(zeeCandidates.size()==0 || myBestZ==-1 ) return kContinue;
@@ -1064,6 +1158,7 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
     if(class1==0 && class2==0) EBZN_gg++;
   }
   */
+
   ///////////////////////////ELECTRON SELECTION///////////////////////////////
   if(myBestZ == -1) return kContinue;
   h1_Selection_->Fill(5.);
@@ -1075,8 +1170,7 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
 
   h1_Selection_->Fill(6.);
 
-
-  // Variables implementation from
+  // Variables implementation from - chiara, da mettere
   // https://github.com/lgray/cmssw/blob/common_isolation_selection_70X/TestElectronID/ElectronIDAnalyzer/plugins/ElectronIDAnalyzer.cc
   bool selectionBool = false;  
 
@@ -1119,20 +1213,15 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
   if (!selectionBool) return kContinue;
   // ----------------------------------------------------------------------
 
-  // chiara: ora queste correzioni sono state sostituite dalla regression. Commento tutto
   float ele1EnergyCorrection(1.);
   float ele2EnergyCorrection(1.);
-  // if(invMassBool && selectionBool && wantEtaCorrection_) {
-  //  ele1EnergyCorrection=getEtaCorrection(zeeCandidates[myBestZ].first->getRecoElectron());
-  //  ele2EnergyCorrection=getEtaCorrection(zeeCandidates[myBestZ].second->getRecoElectron());
-  //}
   if (invMassBool && selectionBool) { 
-
+    
     // SC energies without f(eta) corrections
     // h1_electronCosTheta_SC_    -> Fill( ZeeKinematicTools::cosThetaElectrons_SC(zeeCandidates[myBestZ])  );
     // h1_electronCosTheta_TK_    -> Fill( ZeeKinematicTools::cosThetaElectrons_TK(zeeCandidates[myBestZ])  );
     // h1_electronCosTheta_SC_TK_ -> Fill( ZeeKinematicTools::cosThetaElectrons_SC(zeeCandidates[myBestZ])/ZeeKinematicTools::cosThetaElectrons_TK(zeeCandidates[myBestZ]) - 1. );
-
+    
     mass4tree = ZeeKinematicTools::calculateZMassWithCorrectedElectrons_withTK(zeeCandidates[myBestZ],ele1EnergyCorrection,ele2EnergyCorrection);
     
     h1_reco_ZMass_->Fill(mass4tree);
@@ -1140,6 +1229,7 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
 
     // PUT f(eta) IN OUR Zee ALGORITHM 
     theAlgorithm_->addEvent(zeeCandidates[myBestZ].first, zeeCandidates[myBestZ].second,MZ*sqrt(ele1EnergyCorrection*ele2EnergyCorrection) );
+
     // SC energies after f(eta) corrections - fuffa, perche' ora le correzioni sono vuote
     h1_reco_ZMassCorr_->Fill(mass4tree);
     isEBEB=0;
@@ -1151,9 +1241,8 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
       }
     if (fabs(eta1)>1.5 && fabs(eta2)>1.5 )       
       h1_reco_ZMassCorrEE_->Fill(mass4tree);
-
-
-    //    massDiff4tree = ZeeKinematicTools::calculateZMassWithCorrectedElectrons_withTK(zeeCandidates[myBestZ],ele1EnergyCorrection,ele2EnergyCorrection) - myGenZMass;
+    
+    //  massDiff4tree = ZeeKinematicTools::calculateZMassWithCorrectedElectrons_withTK(zeeCandidates[myBestZ],ele1EnergyCorrection,ele2EnergyCorrection) - myGenZMass;
     myTree->Fill();
   }
 
@@ -1193,15 +1282,14 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
   int zIters;
   
   ZIterativeAlgorithmWithFit::gausfit(h1_reco_ZMass_,par,errpar,2.,2., &zChi2, &zIters );
-  h2_zMassVsLoop_     -> Fill(loopFlag_,  par[1] );
-  h2_zMassDiffVsLoop_ -> Fill(loopFlag_,  (par[1]-MZ)/MZ );
+  h2_zMassVsLoop_        -> Fill(loopFlag_,  par[1] );
+  h2_zMassDiffVsLoop_    -> Fill(loopFlag_,  (par[1]-MZ)/MZ );
   h2_zMassDiffAbsVsLoop_ -> Fill(loopFlag_,  par[1]-MZ );
-  h2_zWidthVsLoop_    -> Fill(loopFlag_, par[2] );
-
+  h2_zWidthVsLoop_       -> Fill(loopFlag_, par[2] );
 
   // RUN the algorithm - real computation of coefficients for this loop (with a fit to the histos which are filled in addEvent)
   theAlgorithm_->iterate();
-
+  
   const std::vector<float>& optimizedCoefficients      = theAlgorithm_->getOptimizedCoefficients();
   const std::vector<float>& optimizedCoefficientsError = theAlgorithm_->getOptimizedCoefficientsError();
   const std::vector<float>& optimizedChi2              = theAlgorithm_->getOptimizedChiSquare();
@@ -1215,7 +1303,7 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
   for (unsigned int ieta=0;ieta<optimizedCoefficients.size();ieta++) {
     
     NewCalibCoeff[ieta] = calibCoeff[ieta] * optimizedCoefficients[ieta];
-    
+
     h2_chi2_[loopFlag_]->Fill( ringNumberCorrector( ieta ), optimizedChi2[ieta] );
     h2_iterations_[loopFlag_]->Fill( ringNumberCorrector( ieta ), optimizedIterations[ieta] );
   }
@@ -1225,80 +1313,128 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
 #ifdef DEBUG
   std::cout<<"Iteration # : "<< loopFlag_ << " CoefficientDistanceAtIteration "<< coefficientDistanceAtIteration[loopFlag_] <<std::endl;
 #endif
+  
 
   // computing the new coefficients
-  for (unsigned int ieta=0;ieta<optimizedCoefficients.size();ieta++) {
+  if (calibMode_ != "SINGLEXTAL") {  
     
-    calibCoeff[ieta] *= optimizedCoefficients[ieta];
-    calibCoeffError[ieta] = calibCoeff[ieta] * sqrt ( pow( optimizedCoefficientsError[ieta]/optimizedCoefficients[ieta], 2 ) + pow( calibCoeffError[ieta]/calibCoeff[ieta] , 2 )  );
+    for (unsigned int ieta=0;ieta<optimizedCoefficients.size();ieta++) {
+      
+      // new coefficients
+      calibCoeff[ieta] *= optimizedCoefficients[ieta];
+      calibCoeffError[ieta] = calibCoeff[ieta] * sqrt ( pow( optimizedCoefficientsError[ieta]/optimizedCoefficients[ieta], 2 ) + pow( calibCoeffError[ieta]/calibCoeff[ieta] , 2 ) );
+      
+#ifdef DEBUG
+      std::cout<< ieta << " " << optimizedCoefficients[ieta] <<std::endl;  
+#endif
+
+      std::vector<DetId> ringIds;
+      if(calibMode_ == "RING")
+	ringIds = EcalRingCalibrationTools::getDetIdsInRing(ieta);
+      if(calibMode_ == "MODULE")
+	ringIds = EcalRingCalibrationTools::getDetIdsInModule(ieta);
+      if(calibMode_ == "ABS_SCALE" || calibMode_ == "ETA_ET_MODE" )
+	ringIds = EcalRingCalibrationTools::getDetIdsInECAL();
+      
+      for (unsigned int iid=0; iid<ringIds.size();++iid){
+	
+	if(ringIds[iid].subdetId() == EcalBarrel){
+	  EBDetId myEBDetId(ringIds[iid]);  
+	  h2_xtalRecalibCoeffBarrel_[loopFlag_]->SetBinContent( myEBDetId.ieta() + 86, myEBDetId.iphi(), 100 * (calibCoeff[ieta]*initCalibCoeff[ieta] - 1.) );
+	  
+	  // extra histos to debug - barrel only
+	  h1_calibCoeffBeforeBarrel_[loopFlag_]->Fill(calibCoeff[ieta]/optimizedCoefficients[ieta]);
+	  h1_calibCoeffAfterBarrel_[loopFlag_]->Fill(calibCoeff[ieta]);
+	  h1_initCalibCoeffBarrel_[loopFlag_]->Fill(initCalibCoeff[ieta]);
+	  h2_calibCoeffVsInitCalibCoeffBarrel_[loopFlag_]->Fill(initCalibCoeff[ieta],calibCoeff[ieta]);
+
+	} else if(ringIds[iid].subdetId() == EcalEndcap){
+	  EEDetId myEEDetId(ringIds[iid]);
+	  if(myEEDetId.zside() < 0)
+	    h2_xtalRecalibCoeffEndcapMinus_[loopFlag_]->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), 100 * (calibCoeff[ieta]*initCalibCoeff[ieta] - 1.) );
+	  else 
+	    h2_xtalRecalibCoeffEndcapPlus_[loopFlag_]->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), 100 * (calibCoeff[ieta]*initCalibCoeff[ieta] - 1.) );
+	}
+	
+	ical->setValue( ringIds[iid], *(ical->getMap().find(ringIds[iid])  ) * optimizedCoefficients[ieta] );
+	
+      } // loop over ringIds
+    } // loop over coefficients
+
+
+  } else if(calibMode_ == "SINGLEXTAL" )  {
+
+    std::vector<DetId> ringIds = EcalRingCalibrationTools::getOrderedDetIdsInECAL();   
+
+    for (unsigned int ieta=0;ieta<optimizedCoefficients.size();ieta++) {
+    
+      // new coefficients
+      calibCoeff[ieta] *= optimizedCoefficients[ieta];
+      calibCoeffError[ieta] = calibCoeff[ieta] * sqrt ( pow( optimizedCoefficientsError[ieta]/optimizedCoefficients[ieta], 2 ) + pow( calibCoeffError[ieta]/calibCoeff[ieta] , 2 ) );
     
 #ifdef DEBUG
-    std::cout<< ieta << " " << optimizedCoefficients[ieta] <<std::endl;  
+      std::cout<< ieta << " " << optimizedCoefficients[ieta] <<std::endl;  
 #endif
-    
-    
-    std::vector<DetId> ringIds;
-    
-    if(calibMode_ == "RING")
-      ringIds = EcalRingCalibrationTools::getDetIdsInRing(ieta);
-
-    if(calibMode_ == "MODULE")
-      ringIds = EcalRingCalibrationTools::getDetIdsInModule(ieta);
-
-    if(calibMode_ == "ABS_SCALE" || calibMode_ == "ETA_ET_MODE" )
-      ringIds = EcalRingCalibrationTools::getDetIdsInECAL();
-
-  
-    for (unsigned int iid=0; iid<ringIds.size();++iid){
-	
-      if(ringIds[iid].subdetId() == EcalBarrel){
-	EBDetId myEBDetId(ringIds[iid]);  
+      
+      if(ringIds[ieta].subdetId() == EcalBarrel){   
+	EBDetId myEBDetId(ringIds[ieta]);  
 	h2_xtalRecalibCoeffBarrel_[loopFlag_]->SetBinContent( myEBDetId.ieta() + 86, myEBDetId.iphi(), 100 * (calibCoeff[ieta]*initCalibCoeff[ieta] - 1.) );
-
-	// filling extra histos to debug - barrel only 
+	
+	// extra histos to debug - barrel only
 	h1_calibCoeffBeforeBarrel_[loopFlag_]->Fill(calibCoeff[ieta]/optimizedCoefficients[ieta]);
 	h1_calibCoeffAfterBarrel_[loopFlag_]->Fill(calibCoeff[ieta]);
 	h1_initCalibCoeffBarrel_[loopFlag_]->Fill(initCalibCoeff[ieta]);
 	h2_calibCoeffVsInitCalibCoeffBarrel_[loopFlag_]->Fill(initCalibCoeff[ieta],calibCoeff[ieta]);
-      }
 
-      if(ringIds[iid].subdetId() == EcalEndcap){
-	EEDetId myEEDetId(ringIds[iid]);
+	// if (!ieta%1000) cout << ieta << ", ieta = " << myEBDetId.ieta() << ", iphi = " << myEBDetId.iphi() << ", initCalibCoeff[ieta] = " << initCalibCoeff[ieta] << endl; 	
+
+	if (optimizedCoefficients[ieta]!=1) cout << "check detId: index = " << ieta << ", coeff = " << optimizedCoefficients[ieta] << ", HI = " << myEBDetId.hashedIndex() << endl;
+
+      } else if(ringIds[ieta].subdetId() == EcalEndcap){
+	EEDetId myEEDetId(ringIds[ieta]);
 	if(myEEDetId.zside() < 0)
 	  h2_xtalRecalibCoeffEndcapMinus_[loopFlag_]->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), 100 * (calibCoeff[ieta]*initCalibCoeff[ieta] - 1.) );
-
-	if(myEEDetId.zside() > 0)
+	else 
 	  h2_xtalRecalibCoeffEndcapPlus_[loopFlag_]->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), 100 * (calibCoeff[ieta]*initCalibCoeff[ieta] - 1.) );
-      }
 
-      ical->setValue( ringIds[iid], *(ical->getMap().find(ringIds[iid])  ) * optimizedCoefficients[ieta] );
-    }    
-  }
-  
+	if (optimizedCoefficients[ieta]!=1) cout << "check detId: index = " << ieta << ", coeff = " << optimizedCoefficients[ieta] << ", HI = " << myEEDetId.hashedIndex() << endl;
+
+	// if (!ieta%1500) cout << ieta << ", ix = " << myEEDetId.ix() << ", iy = " << myEEDetId.iy() << ", iz = " << myEEDetId.zside() << ", initCalibCoeff[ieta] = " << initCalibCoeff[ieta] << endl;
+      }
+      
+      ical->setValue( ringIds[ieta], *(ical->getMap().find(ringIds[ieta])  ) * optimizedCoefficients[ieta] );
+      
+    }   // loop over optimizedCoefficients
+
+  }   // single xtal calib 
+
   for( int kkk = 0; kkk<theAlgorithm_->getNumberOfChannels(); kkk++ ) {  
     h2_coeffVsEta_loop[loopFlag_]->Fill( ringNumberCorrector(kkk), calibCoeff[kkk] );
   }
 
   // dump residual miscalibration at each loop 
   for ( int k = 0; k<theAlgorithm_->getNumberOfChannels(); k++ ) {
+    
+    // here module border rings are excluded from the plot 
     bool isNearCrack = ( abs( ringNumberCorrector(k) ) == 1 || abs( ringNumberCorrector(k) ) == 25 ||
 			 abs( ringNumberCorrector(k) ) == 26 || abs( ringNumberCorrector(k) ) == 45 ||
 			 abs( ringNumberCorrector(k) ) == 46 || abs( ringNumberCorrector(k) ) == 65 ||
 			 abs( ringNumberCorrector(k) ) == 66 || abs( ringNumberCorrector(k) ) == 85 ||
 			 abs( ringNumberCorrector(k) ) == 86 || abs( ringNumberCorrector(k) ) == 124 );
     
-    if(!isNearCrack){
-
+    // For ring calibration I leave everything as it was 
+    // For single xtal calibration I give the choice to exclude (numCrystalCut_>=0) or not (-1) border xtals
+    bool toBeFilled = false;
+    if( calibMode_ == "RING" && !isNearCrack) toBeFilled = true;
+    if( calibMode_ == "SINGLEXTAL" && (numCrystalCut_<0 || !isNearCrack) ) toBeFilled = true;  
+    if( calibMode_ != "RING" && calibMode_ != "SINGLEXTAL" ) toBeFilled = true;
+    if(toBeFilled){ 
       h1_mcParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
-	
-      if(k<170)
-	h1_mcEBParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
-	
-      if(k>=170)
-	h1_mcEEParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
+      if(k<170)  h1_mcEBParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
+      if(k>=170) h1_mcEEParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
     }
   }
-  
+   
   // ----------------------------------
   double parResidual[3];
   double errparResidual[3];
@@ -1563,7 +1699,6 @@ void ZeeCalibration::bookHistograms() {
     sprintf(histoName,"h1_residualMiscalibEEParz_%d",i);
     h1_mcEEParz_[i] = new TH1F(histoName,histoName, 200, -0.2, 0.2);
 
-    // chiara
     sprintf(histoName,"calibCoeffBeforeBarrelParz_%d",i);
     h1_calibCoeffBeforeBarrel_[i] = new TH1F(histoName,histoName, 200, 0., 2.);
     sprintf(histoName,"calibCoeffAfterBarrelParz_%d",i);
@@ -1596,60 +1731,11 @@ void ZeeCalibration::bookHistograms() {
   // h1_afterEWK_mhits    = new TH1F("h1_afterEWK_mhits",   "h1_afterEWK_mhits",   5,-0.5,4.5);
 }
 
-/*
-double ZeeCalibration::fEtaBarrelBad(double scEta) const{
-  
-  float p0 = 1.00153e+00;
-  float p1 = 3.29331e-02;
-  float p2 = 1.21187e-03;
-  
-  double x  = (double) fabs(scEta);
-
-  return 1. / ( p0 + p1*x*x + p2*x*x*x*x );  
-}
-
-double ZeeCalibration::fEtaEndcapGood(double scEta) const{
-
-  // f(eta) for the first 3 classes (100, 110 and 120) 
-  // Ivica's new corrections 01/06
-  float p0 = 1.06819e+00;
-  float p1 = -1.53189e-02;
-  float p2 = 4.01707e-04 ;
-  
-  double x  = (double) fabs(scEta);
-  
-  return 1. / ( p0 + p1*x*x + p2*x*x*x*x );  
-}
-
-double ZeeCalibration::fEtaEndcapBad(double scEta) const{
-  
-  float p0 = 1.17382e+00;
-  float p1 = -6.52319e-02; 
-  float p2 = 6.26108e-03;
-
-  double x  = (double) fabs(scEta);
-
-  return 1. / ( p0 + p1*x*x + p2*x*x*x*x );  
-}
-
-double ZeeCalibration::fEtaBarrelGood(double scEta) const{
-  
-  float p0 = 9.99782e-01 ;
-  float p1 = 1.26983e-02;
-  float p2 = 2.16344e-03;
-  
-  double x  = (double) fabs(scEta);
-  
-  return 1. / ( p0 + p1*x*x + p2*x*x*x*x );  
-}
-*/
-
-
 int ZeeCalibration::ringNumberCorrector(int k) {
 
   int index=-999;
-  
-  if( calibMode_ == "RING"){
+ 
+   if( calibMode_ == "RING"){
     if(k>=0 && k<=84)    index = k - 85;
     if(k>=85 && k<=169)  index = k - 84;
     if(k>=170 && k<=208) index = - k + 84;
@@ -1661,41 +1747,18 @@ int ZeeCalibration::ringNumberCorrector(int k) {
     if(k>=72 && k<=143) index = k - 71;
   }
 
+  else if( calibMode_ == "SINGLEXTAL"){
+
+    int ringIndex = (HashedToRingIndexMap.find(k))->second;
+
+    if(ringIndex>=0 && ringIndex<=84)    index = ringIndex - 85;
+    if(ringIndex>=85 && ringIndex<=169)  index = ringIndex - 84;
+    if(ringIndex>=170 && ringIndex<=208) index = - ringIndex + 84;
+    if(ringIndex>=209 && ringIndex<=247) index = ringIndex - 123;    
+  }
+  
   return index;
 }
-
-/*
-double ZeeCalibration::getEtaCorrection(const reco::GsfElectron* ele){
-
-  double correction(1.);
-
-  if(ele->classification() ==0 ||
-     ele->classification() ==10 ||
-     ele->classification() ==20)
-    correction = fEtaBarrelGood(ele->superCluster()->eta());
-                                                                                                                                               
-  if(ele->classification() ==100 ||
-     ele->classification() ==110 ||
-     ele->classification() ==120)
-    correction = fEtaEndcapGood(ele->superCluster()->eta());
-                                                                                                                                               
-  if(ele->classification() ==30 ||
-     ele->classification() ==31 ||
-     ele->classification() ==32 ||
-     ele->classification() ==33 ||
-     ele->classification() ==34)
-    correction = fEtaBarrelBad(ele->superCluster()->eta());
-
-  if(ele->classification() ==130 ||
-     ele->classification() ==131 ||
-     ele->classification() ==132 ||
-     ele->classification() ==133 ||
-     ele->classification() ==134)
-    correction = fEtaEndcapBad(ele->superCluster()->eta());
- 
-  return correction;                                         
-}
-*/
 
 std::pair<DetId, double> ZeeCalibration::getHottestDetId(const std::vector<std::pair< DetId,float > >& mySCRecHits, const EBRecHitCollection* ebhits, const EERecHitCollection* eehits){
   
@@ -1752,23 +1815,28 @@ bool ZeeCalibration::xtalIsOnModuleBorder( EBDetId myEBDetId ){
   return myBool;
 }
 
-float ZeeCalibration::computeCoefficientDistanceAtIteration( float v1[250], float v2[250], int size ){
+float ZeeCalibration::computeCoefficientDistanceAtIteration( float v1[N_XTAL_TOTAL], float v2[N_XTAL_TOTAL], int size ){
 
   float dist(0.);
   
   for(int i =0; i < size; i++) {
-
-    bool isNearCrack = false;
-
-    if( calibMode_ == "RING"){ // exclude non-calibrated rings from computation
-      isNearCrack = ( abs( ringNumberCorrector(i) ) == 1 || abs( ringNumberCorrector(i) ) == 25 ||
-		      abs( ringNumberCorrector(i) ) == 26 || abs( ringNumberCorrector(i) ) == 45 ||
-		      abs( ringNumberCorrector(i) ) == 46 || abs( ringNumberCorrector(i) ) == 65 ||
-		      abs( ringNumberCorrector(i) ) == 66 || abs( ringNumberCorrector(i) ) == 85 ||
-		      abs( ringNumberCorrector(i) ) == 86 || abs( ringNumberCorrector(i) ) == 124 );
-    }
     
-    if(!isNearCrack)
+    // here module border rings are excluded from the plot 
+    bool isNearCrack = false;
+    isNearCrack = ( abs( ringNumberCorrector(i) ) == 1 || abs( ringNumberCorrector(i) ) == 25 ||
+		    abs( ringNumberCorrector(i) ) == 26 || abs( ringNumberCorrector(i) ) == 45 ||
+		    abs( ringNumberCorrector(i) ) == 46 || abs( ringNumberCorrector(i) ) == 65 ||
+		    abs( ringNumberCorrector(i) ) == 66 || abs( ringNumberCorrector(i) ) == 85 ||
+		    abs( ringNumberCorrector(i) ) == 86 || abs( ringNumberCorrector(i) ) == 124 );
+    
+    // For ring calibration I leave everything as it was 
+    // For single xtal calibration I give the choice to exclude (numCrystalCut_>=0) or not (-1) border xtals
+    bool toBeFilled = false;
+    if( calibMode_ == "RING" && !isNearCrack) toBeFilled = true;
+    if( calibMode_ == "SINGLEXTAL" && (numCrystalCut_<0 || !isNearCrack) ) toBeFilled = true;  
+    if( calibMode_ != "RING" && calibMode_ != "SINGLEXTAL" ) toBeFilled = true;  
+    
+    if(toBeFilled)
       dist += pow( v1[i]-v2[i], 2 );
   }
   
