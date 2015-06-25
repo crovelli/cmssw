@@ -13,6 +13,7 @@
 #include <string>
 #include <TH1.h>
 #include <TH2.h>
+#include <map>
 
 #include "Calibration/Tools/interface/CalibElectron.h"
 
@@ -24,7 +25,7 @@
 */
 
 #define nMaxIterations 50
-#define nMaxChannels 250
+#define nMaxChannels 75848 
 
 
 
@@ -125,6 +126,8 @@ class ZIterativeAlgorithmWithFit
 
   unsigned int currentEvent_;
   unsigned int currentIteration_;
+
+  std::map<int,short> HashedToRingIndexMap;
 
   std::vector< std::pair<calib::CalibElectron*,calib::CalibElectron*> > electrons_;
 
