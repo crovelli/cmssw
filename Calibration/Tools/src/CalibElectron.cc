@@ -18,11 +18,11 @@ CalibElectron::CalibElectron() : theElectron_(0), theParentSC_(0), theHits_(0), 
 std::vector< std::pair<int,float> > CalibElectron::getCalibModulesWeights(TString calibtype)
 {
   std::vector< std::pair<int,float> > theWeights;
-
+  
   if (calibtype == "RING")
     {
       float w_ring[EcalRingCalibrationTools::N_RING_TOTAL];
-
+      
       for (int i=0;i<EcalRingCalibrationTools::N_RING_TOTAL;++i)
 	w_ring[i]=0.;
       
@@ -38,7 +38,7 @@ std::vector< std::pair<int,float> > CalibElectron::getCalibModulesWeights(TStrin
 	  rh = &*(theEEHits_->find((*idIt).first));
 	if (!rh)
 	  std::cout << "CalibElectron::BIG ERROR::RecHit NOT FOUND" << std::endl;  
-	w_ring[EcalRingCalibrationTools::getRingIndex((*idIt).first)]+=rh->energy();
+	w_ring[EcalRingCalibrationTools::getRingIndex((*idIt).first)]+=rh->energy();  
       }
 
       for (int i=0;i<EcalRingCalibrationTools::N_RING_TOTAL;++i)
@@ -144,6 +144,33 @@ std::vector< std::pair<int,float> > CalibElectron::getCalibModulesWeights(TStrin
 	
       }
       
+    }
+
+  else if(calibtype == "SINGLEXTAL")
+    {
+      float w_ring[EcalRingCalibrationTools::N_XTAL_TOTAL];
+      
+      for (int i=0;i<EcalRingCalibrationTools::N_XTAL_TOTAL;++i) w_ring[i]=0.;
+      
+      if (!theParentSC_) theParentSC_=&(*theElectron_->parentSuperCluster());
+      std::vector<std::pair<DetId,float> > scDetIds = theParentSC_->hitsAndFractions();
+      
+      for(std::vector<std::pair<DetId,float> >::const_iterator idIt=scDetIds.begin(); idIt!=scDetIds.end(); ++idIt){
+    
+	const EcalRecHit* rh=0;
+	if ( (*idIt).first.subdetId() == EcalBarrel) 
+	  rh = &*(theHits_->find((*idIt).first));
+	else if ( (*idIt).first.subdetId() == EcalEndcap) 
+	  rh = &*(theEEHits_->find((*idIt).first));
+	if (!rh)
+	  std::cout << "CalibElectron::BIG ERROR::RecHit NOT FOUND" << std::endl;  
+	w_ring[EcalRingCalibrationTools::getHashedIndex((*idIt).first)]+=rh->energy();  
+      }
+
+      for (int i=0;i<EcalRingCalibrationTools::N_XTAL_TOTAL;++i)
+	if (w_ring[i]!=0.) {
+	  theWeights.push_back(std::pair<int,float>(i,w_ring[i]));
+	}
     }
   
   else 
