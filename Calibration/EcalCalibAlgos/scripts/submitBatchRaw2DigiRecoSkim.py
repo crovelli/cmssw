@@ -37,7 +37,6 @@ def main():
 
     dataset = args[0]      
 
-    print 'chiara'
     print opt.neventsjob
 
     inputlist="lists_Relvals/"+dataset+".list"
