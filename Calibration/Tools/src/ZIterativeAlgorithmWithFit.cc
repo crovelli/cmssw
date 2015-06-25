@@ -241,9 +241,6 @@ bool ZIterativeAlgorithmWithFit::iterate() {
 	  optimizedChiSquare_[i] = chi2;
 	  optimizedIterations_[i] = iters;
 
-
-	  std::cout << "fill: i = " << i << ", coeff = " << optimizedCoefficients_[i] << std::endl;
-	  
 	  if (peak >=MIN_RESCALE && peak <= MAX_RESCALE)
 	    optimizedCoefficients_[i] = 1 / (1 + peak);
 	  else
