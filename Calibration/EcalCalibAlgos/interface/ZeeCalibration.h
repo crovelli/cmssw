@@ -99,6 +99,10 @@ class ZeeCalibration : public edm::ESProducerLooper {
   /// Produce Ecal interCalibrations
   virtual boost::shared_ptr<EcalIntercalibConstants> produceEcalIntercalibConstants( const EcalIntercalibConstantsRcd& iRecord );
 
+  static const int N_XTAL_TOTAL = 75848;   
+  static const int N_XTAL_BARREL = 61200; 
+  static const int N_XTAL_ENDCAP = 14648; 
+
  private:
 
   //double fEtaBarrelBad(double scEta) const;
@@ -121,7 +125,7 @@ class ZeeCalibration : public edm::ESProducerLooper {
 
   bool xtalIsOnModuleBorder( EBDetId myEBDetId );
 
-  float computeCoefficientDistanceAtIteration( float v1[250], float v2[250], int size);
+  float computeCoefficientDistanceAtIteration( float v1[N_XTAL_TOTAL], float v2[N_XTAL_TOTAL], int size);
 
   // ----------member data ---------------------------
 
@@ -140,6 +144,7 @@ class ZeeCalibration : public edm::ESProducerLooper {
 
   std::string mcProducer_;
   std::string calibMode_;
+  int numCrystalCut_;
 
   edm::InputTag electrons_;
 
@@ -181,6 +186,8 @@ class ZeeCalibration : public edm::ESProducerLooper {
 
   ZeePlots* myZeePlots_;
   ZeeRescaleFactorPlots* myZeeRescaleFactorPlots_;
+
+  std::map<int,short> HashedToRingIndexMap;
 
   // steering parameters
   edm::ParameterSet theParameterSet;
@@ -236,7 +243,7 @@ class ZeeCalibration : public edm::ESProducerLooper {
   TH1F* h_ESCEtrue_[25];
   TH2F* h_ESCEtrueVsEta_[25];
 
-  TH2F* h2_coeffVsEta_loop[25];  // chiara: extra plots
+  TH2F* h2_coeffVsEta_loop[25]; 
 
   TH2F* h2_coeffVsEta_;
   TH2F* h2_coeffVsEtaGrouped_;
