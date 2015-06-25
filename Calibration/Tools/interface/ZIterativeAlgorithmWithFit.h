@@ -12,6 +12,8 @@
 #include <vector>
 #include <string>
 #include <TH1.h>
+#include <TH2.h>
+#include <map>
 
 #include "Calibration/Tools/interface/CalibElectron.h"
 
@@ -23,7 +25,7 @@
 */
 
 #define nMaxIterations 50
-#define nMaxChannels 250
+#define nMaxChannels 75848 
 
 
 
@@ -34,6 +36,7 @@ class ZIterativeAlgorithmWithFit
     TH1* weightedRescaleFactor[nMaxIterations][nMaxChannels];
     TH1* unweightedRescaleFactor[nMaxIterations][nMaxChannels];
     TH1* weight[nMaxIterations][nMaxChannels];
+    TH2* weightedZmassVsChannel[nMaxIterations];  
   };
 
   /// Default constructor
@@ -123,6 +126,8 @@ class ZIterativeAlgorithmWithFit
 
   unsigned int currentEvent_;
   unsigned int currentIteration_;
+
+  std::map<int,short> HashedToRingIndexMap;
 
   std::vector< std::pair<calib::CalibElectron*,calib::CalibElectron*> > electrons_;
 
