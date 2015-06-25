@@ -45,6 +45,7 @@ const double ZIterativeAlgorithmWithFit::M_Z_=91.187;
 ZIterativeAlgorithmWithFit::ZIterativeAlgorithmWithFit() {
 
   numberOfIterations_=10;
+  nCrystalCut_=-1;
   channels_=1;
   totalEvents_=0;
   currentEvent_=0;
@@ -65,6 +66,7 @@ ZIterativeAlgorithmWithFit::ZIterativeAlgorithmWithFit(const edm::ParameterSet& 
   numberOfIterations_=ps.getUntrackedParameter<unsigned int>("maxLoops",0);
   massMethod = ps.getUntrackedParameter<std::string>("ZCalib_InvMass","SCMass");
   calibType_= ps.getUntrackedParameter<std::string>("ZCalib_CalibType","RING"); 
+  nCrystalCut_=ps.getUntrackedParameter<int>("ZCalib_nCrystalCut",-1); 
 
   if (calibType_ == "RING")
     channels_ = EcalRingCalibrationTools::N_RING_TOTAL;
@@ -74,11 +76,11 @@ ZIterativeAlgorithmWithFit::ZIterativeAlgorithmWithFit(const edm::ParameterSet& 
     channels_ = 1;  
   else if(calibType_ == "ETA_ET_MODE")
     channels_ = EcalIndexingTools::getInstance()->getNumberOfChannels();
-
+  else if(calibType_ == "SINGLEXTAL")    
+    channels_ = EcalRingCalibrationTools::N_XTAL_TOTAL;  
+  
   std::cout << "[ZIterativeAlgorithmWithFit::ZIterativeAlgorithmWithFit] channels_ = " << channels_ << std::endl;
-
-  nCrystalCut_=ps.getUntrackedParameter<int>("ZCalib_nCrystalCut",-1);
-
+  
   // Resetting currentEvent & iteration
   currentEvent_=0;
   currentIteration_=0;
@@ -103,6 +105,10 @@ ZIterativeAlgorithmWithFit::ZIterativeAlgorithmWithFit(const edm::ParameterSet& 
     getStatWeights(WeightFileName_);
     //    Event_Weight_.resize(events);
   }
+
+  // chiara: trovare un modo furbo per metterlo qui e chiamarlo una sola volta
+  // if(calibType_ == "SINGLEXTAL" )
+  // HashedToRingIndexMap = EcalRingCalibrationTools::HashedToRingIndex();
 }
 
 // histo booking
@@ -119,20 +125,29 @@ void ZIterativeAlgorithmWithFit::bookHistograms() {
       // ==> to get the optimized coefficients
       sprintf(histoName,  "WeightedRescaleFactor_channel_%d_Iteration_%d",i1, i2);
       sprintf(histoTitle, "WeightedRescaleFactor Channel_%d Iteration %d",i1, i2);
-      if (i1>15 && i1<155)
-	thePlots_->weightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_LOWETA, MIN_RESCALE, MAX_RESCALE);
-      else
-	thePlots_->weightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_HIGHETA, MIN_RESCALE, MAX_RESCALE);
+      if(calibType_ != "SINGLEXTAL" ) { 
+	if (i1>15 && i1<155)  
+	  thePlots_->weightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_LOWETA, MIN_RESCALE, MAX_RESCALE);
+	else
+	  thePlots_->weightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_HIGHETA, MIN_RESCALE, MAX_RESCALE);
+      } else {
+	thePlots_->weightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_LOWETA, MIN_RESCALE, MAX_RESCALE);    // qui: controlla che questo binning sia ragionevole
+      }
       thePlots_->weightedRescaleFactor[i2][i1]->GetXaxis()->SetTitle("Rescale factor");
       thePlots_->weightedRescaleFactor[i2][i1]->GetYaxis()->SetTitle("a.u.");
 
       // UnweightedRescaling factor (rescale distribution without weight)
       sprintf(histoName,  "UnweightedRescaleFactor_channel_%d_Iteration_%d",i1, i2);
       sprintf(histoTitle, "UnweightedRescaleFactor Channel_%d Iteration %d",i1, i2);
-      if (i1>15 && i1<155)
-	thePlots_->unweightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_LOWETA, MIN_RESCALE, MAX_RESCALE);
-      else
-	thePlots_->unweightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_HIGHETA, MIN_RESCALE, MAX_RESCALE);
+      if(calibType_ != "SINGLEXTAL" ) {
+	if (i1>15 && i1<155)    
+	  thePlots_->unweightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_LOWETA, MIN_RESCALE, MAX_RESCALE);
+	else
+	  thePlots_->unweightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_HIGHETA, MIN_RESCALE, MAX_RESCALE);      
+      } else {
+	thePlots_->unweightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_LOWETA, MIN_RESCALE, MAX_RESCALE);   // qui: controlla che questo binning sia ragionevole
+      }
+      thePlots_->unweightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_LOWETA, MIN_RESCALE, MAX_RESCALE); 
       thePlots_->unweightedRescaleFactor[i2][i1]->GetXaxis()->SetTitle("Rescale factor");
       thePlots_->unweightedRescaleFactor[i2][i1]->GetYaxis()->SetTitle("a.u.");
 
@@ -162,7 +177,7 @@ void ZIterativeAlgorithmWithFit::getStatWeights(const std::string &file) {
     std::cout << "ZIterativeAlgorithmWithFit::FATAL: stat weight  file " << file << " not found" << std::endl;
     exit(-1);
   }
-  for(unsigned int i=0;i<channels_;i++) {
+  for(unsigned int i=0;i<channels_;i++) {    // qui. Secondo me non e' usato, altrimenti il file va aggiornato
     int imod;
     statfile >> imod >> StatWeights_[i];
     //std::cout << "Read Stat Weight for module " << imod << ": " <<  StatWeights_[i] << std::endl;
@@ -185,30 +200,37 @@ bool ZIterativeAlgorithmWithFit::resetIteration() {
 
 // computation of the optimizedCoefficients_ at this loop
 // with an iterative gaussian fit to the weightedRescaleFactors histos
+
 bool ZIterativeAlgorithmWithFit::iterate() {
+
+  // chiara: trovare un modo furbo per metterlo nel costruttore o simili e chiamarlo una sola volta
+  if(calibType_ == "SINGLEXTAL" )
+    HashedToRingIndexMap = EcalRingCalibrationTools::HashedToRingIndex();
 
   // Found optimized coefficients
   for (int i=0;i<(int)channels_;i++) { 
     
-    //RP      if (weight_sum_[i]!=0. && calib_fac_[i]!=0.) {
-    if( (nCrystalCut_ == -1) || ((!(i <=  nCrystalCut_ -1 )) &&
-				 !((i > (19-nCrystalCut_)) && (i <= (19+nCrystalCut_))) &&
-				 !((i > (39-nCrystalCut_)) && (i <= (39+nCrystalCut_))) &&
-				 !((i > (59-nCrystalCut_)) && (i <= (59+nCrystalCut_))) &&
-				 !((i > (84-nCrystalCut_)) && (i <= (84+nCrystalCut_))) &&
-				 !((i > (109-nCrystalCut_)) && (i <= (109+nCrystalCut_))) &&
-				 !((i > (129-nCrystalCut_)) && (i <= (129+nCrystalCut_))) &&
-				 !((i > (149-nCrystalCut_)) && (i <= (149+nCrystalCut_))) &&
-				 !(i > (169-nCrystalCut_))))
+    // with nCrystalCut_==1 this is excluding:
+    // ieta = -85, -66, -46, -26, -1, +25, 45, 65, 85
+    int newIdx = i;
+    if (calibType_ == "SINGLEXTAL") newIdx = (HashedToRingIndexMap.find(i))->second;
+    if( (nCrystalCut_ == -1) || ((!(newIdx <=  nCrystalCut_ -1 )) &&
+				 !((newIdx > (19-nCrystalCut_)) && (newIdx <= (19+nCrystalCut_))) &&
+				 !((newIdx > (39-nCrystalCut_)) && (newIdx <= (39+nCrystalCut_))) &&
+				 !((newIdx > (59-nCrystalCut_)) && (newIdx <= (59+nCrystalCut_))) &&
+				 !((newIdx > (84-nCrystalCut_)) && (newIdx <= (84+nCrystalCut_))) &&
+				 !((newIdx > (109-nCrystalCut_)) && (newIdx <= (109+nCrystalCut_))) &&
+				 !((newIdx > (129-nCrystalCut_)) && (newIdx <= (129+nCrystalCut_))) &&
+				 !((newIdx > (149-nCrystalCut_)) && (newIdx <= (149+nCrystalCut_))) &&
+				 !(newIdx > (169-nCrystalCut_))))
       {
 	if (weight_sum_[i]!=0.) {
-	  //optimizedCoefficients_[i] = calib_fac_[i]/weight_sum_[i];
 	  
 	  double gausFitParameters[3], gausFitParameterErrors[3], gausFitChi2;
 	  int gausFitIterations;
 	  
 	  gausfit( (TH1F*)thePlots_->weightedRescaleFactor[currentIteration_][i], gausFitParameters, gausFitParameterErrors, 2.5, 2.5, &gausFitChi2, &gausFitIterations );
-	  
+
 	  float peak=gausFitParameters[1];
 	  float peakError=gausFitParameterErrors[1];
 	  float chi2 = gausFitChi2;
@@ -218,6 +240,9 @@ bool ZIterativeAlgorithmWithFit::iterate() {
 	  optimizedCoefficientsError_[i] = peakError;
 	  optimizedChiSquare_[i] = chi2;
 	  optimizedIterations_[i] = iters;
+
+
+	  std::cout << "fill: i = " << i << ", coeff = " << optimizedCoefficients_[i] << std::endl;
 	  
 	  if (peak >=MIN_RESCALE && peak <= MAX_RESCALE)
 	    optimizedCoefficients_[i] = 1 / (1 + peak);
@@ -308,25 +333,32 @@ void ZIterativeAlgorithmWithFit::getWeight(unsigned int event_id, calib::CalibEl
   // sum of the energies of the rechits corresponding to the electron SC
   // and division by ring, module etc according to calibType_
   // first = ring etc; second = energy sum
+
+  // qui chiara: trovare un modo furbo per metterlo nel costruttore o simili e chiamarlo una sola volta
+  if(calibType_ == "SINGLEXTAL" )
+    HashedToRingIndexMap = EcalRingCalibrationTools::HashedToRingIndex();
+
   std::vector< std::pair<int,float> > modules=(*ele).getCalibModulesWeights(calibType_);   
   
   for (int imod=0; imod< (int) modules.size(); imod++) {
     
     int mod = (int) modules[imod].first;
-    
     if (mod< (int) channels_ && mod>=0) {
 
       if (modules[imod].second >= 0.12 && modules[imod].second < 10000.) { 
-	
-	if( (nCrystalCut_ == -1) || ((!(mod <= nCrystalCut_ - 1 )) &&
-				     !((mod > (19-nCrystalCut_)) && (mod <= (19+nCrystalCut_))) &&
-				     !((mod > (39-nCrystalCut_)) && (mod <= (39+nCrystalCut_))) &&
-				     !((mod > (59-nCrystalCut_)) && (mod <= (59+nCrystalCut_))) &&
-				     !((mod > (84-nCrystalCut_)) && (mod <= (84+nCrystalCut_))) &&
-				     !((mod > (109-nCrystalCut_)) && (mod <= (109+nCrystalCut_))) &&
-				     !((mod > (129-nCrystalCut_)) && (mod <= (129+nCrystalCut_))) &&
-				     !((mod > (149-nCrystalCut_)) && (mod <= (149+nCrystalCut_))) &&
-				     !(mod > (169-nCrystalCut_))))
+
+	int newIdx = imod;
+	if (calibType_ == "SINGLEXTAL") newIdx = (HashedToRingIndexMap.find(imod))->second;
+    
+	if( (nCrystalCut_ == -1) || ((!(newIdx <=  nCrystalCut_ -1 )) &&
+				     !((newIdx > (19-nCrystalCut_)) && (newIdx <= (19+nCrystalCut_))) &&
+				     !((newIdx > (39-nCrystalCut_)) && (newIdx <= (39+nCrystalCut_))) &&
+				     !((newIdx > (59-nCrystalCut_)) && (newIdx <= (59+nCrystalCut_))) &&
+				     !((newIdx > (84-nCrystalCut_)) && (newIdx <= (84+nCrystalCut_))) &&
+				     !((newIdx > (109-nCrystalCut_)) && (newIdx <= (109+nCrystalCut_))) &&
+				     !((newIdx > (129-nCrystalCut_)) && (newIdx <= (129+nCrystalCut_))) &&
+				     !((newIdx > (149-nCrystalCut_)) && (newIdx <= (149+nCrystalCut_))) &&
+				     !(newIdx > (169-nCrystalCut_))))
 	  {
 	    
 	    // SC rawEne / sum of raw energies of the SC hits in imod
@@ -350,7 +382,7 @@ void ZIterativeAlgorithmWithFit::getWeight(unsigned int event_id, calib::CalibEl
 		thePlots_->weightedRescaleFactor[currentIteration_][mod]->Fill(rescale,weight2);
 		thePlots_->unweightedRescaleFactor[currentIteration_][mod]->Fill(rescale,1.);
 		thePlots_->weight[currentIteration_][mod]->Fill(weight2,1.);
-		thePlots_->weightedZmassVsChannel[currentIteration_]->Fill(mod,massReco_[event_id],weight2);  // chiara
+		thePlots_->weightedZmassVsChannel[currentIteration_]->Fill(mod,massReco_[event_id],weight2);  
 	      }
 	      else {
 		std::cout     << "[ZIterativeAlgorithmWithFit]::[getWeight]::rescale out " << rescale << std::endl;
