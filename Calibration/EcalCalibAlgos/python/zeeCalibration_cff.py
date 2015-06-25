@@ -19,6 +19,7 @@ looper = cms.Looper("ZeeCalibration",
     etMax = cms.untracked.double(100.),
     ZCalib_CalibType = cms.untracked.string('RING'),
     ZCalib_InvMass = cms.untracked.string('SCMass'),                
+    ZCalib_nCrystalCut = cms.untracked.int32(-1),                    
     #
     rechitProducer = cms.string('recalibRechit'),
     rechitCollection = cms.string('EcalRecHitsEB'),
