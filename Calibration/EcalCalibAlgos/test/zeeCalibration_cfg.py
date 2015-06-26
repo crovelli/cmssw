@@ -18,7 +18,7 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(50)
+    input = cms.untracked.int32(-1)
 )
 
 from Calibration.EcalCalibAlgos.DYJetsToLLPhys14SkimZee_cff import *   
@@ -74,15 +74,15 @@ process.particleFlowSuperClusterECAL.PFSuperClusterCollectionEndcapWithPreshower
 
 # calibration algo
 process.load("Calibration.EcalCalibAlgos.zeeCalibration_cff")
-process.looper.maxLoops = cms.untracked.uint32(7)              
+process.looper.maxLoops = cms.untracked.uint32(7)     # 7              
 process.looper.electronSelection = cms.untracked.int32(-1)     # 0-1-2-3-4; -1 to do nothing
 process.looper.histoFile = cms.string('myHistograms_test.root')
 process.looper.zeeFile = cms.string('myZeePlots_test.root')
 process.looper.initialMiscalibrationBarrel = cms.untracked.string('miscalib_ring_1.00_0.10.xml')
 #process.looper.initialMiscalibrationBarrel = cms.untracked.string('')
 process.looper.initialMiscalibrationEndcap = cms.untracked.string('')
-#process.looper.ZCalib_CalibType = cms.untracked.string('SINGLEXTAL')
-process.looper.ZCalib_CalibType = cms.untracked.string('RING')
+process.looper.ZCalib_CalibType = cms.untracked.string('SINGLEXTAL')
+#process.looper.ZCalib_CalibType = cms.untracked.string('RING')
 process.looper.ZCalib_InvMass = cms.untracked.string('SCTRMass')
 process.looper.ZCalib_nCrystalCut = cms.untracked.int32(-1)        # -1: not exclude any crystal from calib; 1: to exclude only the xtal at border
 # not to be changed

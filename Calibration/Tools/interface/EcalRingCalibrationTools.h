@@ -34,6 +34,7 @@ class EcalRingCalibrationTools
 
   /// Map to associate hashed index and ring index 
   static std::map<int,short> HashedToRingIndex();
+  static std::map<int,short> HashedToRingIndexEE();
   
   /// Retrieve the DetIds in a phi-ring 
   static std::vector<DetId> getDetIdsInRing(short aRingIndex);

@@ -204,25 +204,35 @@ bool ZIterativeAlgorithmWithFit::resetIteration() {
 bool ZIterativeAlgorithmWithFit::iterate() {
 
   // chiara: trovare un modo furbo per metterlo nel costruttore o simili e chiamarlo una sola volta
-  if(calibType_ == "SINGLEXTAL" )
-    HashedToRingIndexMap = EcalRingCalibrationTools::HashedToRingIndex();
+  // if(calibType_ == "SINGLEXTAL" )
+  // HashedToRingIndexMap = EcalRingCalibrationTools::HashedToRingIndex();
 
   // Found optimized coefficients
   for (int i=0;i<(int)channels_;i++) { 
-    
+
     // with nCrystalCut_==1 this is excluding:
     // ieta = -85, -66, -46, -26, -1, +25, 45, 65, 85
     int newIdx = i;
-    if (calibType_ == "SINGLEXTAL") newIdx = (HashedToRingIndexMap.find(i))->second;
-    if( (nCrystalCut_ == -1) || ((!(newIdx <=  nCrystalCut_ -1 )) &&
-				 !((newIdx > (19-nCrystalCut_)) && (newIdx <= (19+nCrystalCut_))) &&
-				 !((newIdx > (39-nCrystalCut_)) && (newIdx <= (39+nCrystalCut_))) &&
-				 !((newIdx > (59-nCrystalCut_)) && (newIdx <= (59+nCrystalCut_))) &&
-				 !((newIdx > (84-nCrystalCut_)) && (newIdx <= (84+nCrystalCut_))) &&
-				 !((newIdx > (109-nCrystalCut_)) && (newIdx <= (109+nCrystalCut_))) &&
-				 !((newIdx > (129-nCrystalCut_)) && (newIdx <= (129+nCrystalCut_))) &&
-				 !((newIdx > (149-nCrystalCut_)) && (newIdx <= (149+nCrystalCut_))) &&
-				 !(newIdx > (169-nCrystalCut_))))
+
+    // Chiara: To speed-up: for the moment, we comment the possibility to exclude border channels for single xtals   
+    // if (calibType_ == "SINGLEXTAL") newIdx = (HashedToRingIndexMap.find(i))->second;
+    bool toBeConsidered = false;
+    if(calibType_ == "SINGLEXTAL" )              
+      toBeConsidered = true;   
+    else {
+      if( (nCrystalCut_ == -1) || ((!(newIdx <=  nCrystalCut_ -1 )) &&
+				   !((newIdx > (19-nCrystalCut_)) && (newIdx <= (19+nCrystalCut_))) &&
+				   !((newIdx > (39-nCrystalCut_)) && (newIdx <= (39+nCrystalCut_))) &&
+				   !((newIdx > (59-nCrystalCut_)) && (newIdx <= (59+nCrystalCut_))) &&
+				   !((newIdx > (84-nCrystalCut_)) && (newIdx <= (84+nCrystalCut_))) &&
+				   !((newIdx > (109-nCrystalCut_)) && (newIdx <= (109+nCrystalCut_))) &&
+				   !((newIdx > (129-nCrystalCut_)) && (newIdx <= (129+nCrystalCut_))) &&
+				   !((newIdx > (149-nCrystalCut_)) && (newIdx <= (149+nCrystalCut_))) &&
+				   !(newIdx > (169-nCrystalCut_))) )
+	toBeConsidered = true;
+    }
+    
+    if (toBeConsidered) 
       {
 	if (weight_sum_[i]!=0.) {
 	  
@@ -331,9 +341,10 @@ void ZIterativeAlgorithmWithFit::getWeight(unsigned int event_id, calib::CalibEl
   // and division by ring, module etc according to calibType_
   // first = ring etc; second = energy sum
 
+  // To speed-up: for the moment, we comment the possibility to exclude border channels
   // qui chiara: trovare un modo furbo per metterlo nel costruttore o simili e chiamarlo una sola volta
-  if(calibType_ == "SINGLEXTAL" )
-    HashedToRingIndexMap = EcalRingCalibrationTools::HashedToRingIndex();
+  // if(calibType_ == "SINGLEXTAL" )
+  // HashedToRingIndexMap = EcalRingCalibrationTools::HashedToRingIndex();
 
   std::vector< std::pair<int,float> > modules=(*ele).getCalibModulesWeights(calibType_);   
   
@@ -344,20 +355,28 @@ void ZIterativeAlgorithmWithFit::getWeight(unsigned int event_id, calib::CalibEl
 
       if (modules[imod].second >= 0.12 && modules[imod].second < 10000.) { 
 
+	// Chiara: to speed-up we comment the possibility to exclude border xtals from calib, for the moment
 	int newIdx = imod;
-	if (calibType_ == "SINGLEXTAL") newIdx = (HashedToRingIndexMap.find(imod))->second;
-    
-	if( (nCrystalCut_ == -1) || ((!(newIdx <=  nCrystalCut_ -1 )) &&
-				     !((newIdx > (19-nCrystalCut_)) && (newIdx <= (19+nCrystalCut_))) &&
-				     !((newIdx > (39-nCrystalCut_)) && (newIdx <= (39+nCrystalCut_))) &&
-				     !((newIdx > (59-nCrystalCut_)) && (newIdx <= (59+nCrystalCut_))) &&
-				     !((newIdx > (84-nCrystalCut_)) && (newIdx <= (84+nCrystalCut_))) &&
-				     !((newIdx > (109-nCrystalCut_)) && (newIdx <= (109+nCrystalCut_))) &&
-				     !((newIdx > (129-nCrystalCut_)) && (newIdx <= (129+nCrystalCut_))) &&
-				     !((newIdx > (149-nCrystalCut_)) && (newIdx <= (149+nCrystalCut_))) &&
-				     !(newIdx > (169-nCrystalCut_))))
+	// if (calibType_ == "SINGLEXTAL") newIdx = (HashedToRingIndexMap.find(imod))->second;
+
+	bool toBeConsidered = false;
+	if(calibType_ == "SINGLEXTAL" )              
+	  toBeConsidered = true;   
+	else {
+	  if( (nCrystalCut_ == -1) || ((!(newIdx <=  nCrystalCut_ -1 )) &&
+				       !((newIdx > (19-nCrystalCut_)) && (newIdx <= (19+nCrystalCut_))) &&
+				       !((newIdx > (39-nCrystalCut_)) && (newIdx <= (39+nCrystalCut_))) &&
+				       !((newIdx > (59-nCrystalCut_)) && (newIdx <= (59+nCrystalCut_))) &&
+				       !((newIdx > (84-nCrystalCut_)) && (newIdx <= (84+nCrystalCut_))) &&
+				       !((newIdx > (109-nCrystalCut_)) && (newIdx <= (109+nCrystalCut_))) &&
+				       !((newIdx > (129-nCrystalCut_)) && (newIdx <= (129+nCrystalCut_))) &&
+				       !((newIdx > (149-nCrystalCut_)) && (newIdx <= (149+nCrystalCut_))) &&
+				       !(newIdx > (169-nCrystalCut_)))) 
+	    toBeConsidered = true;
+	}
+
+	if (toBeConsidered)
 	  {
-	    
 	    // SC rawEne / sum of raw energies of the SC hits in imod
 	    // fraction of raw energy of the electron in the module
 	    float weight2 = modules[imod].second / ele->getParentSuperCluster()->rawEnergy();

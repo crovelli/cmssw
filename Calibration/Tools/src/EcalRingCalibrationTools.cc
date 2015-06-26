@@ -111,6 +111,27 @@ std::map<int,short> EcalRingCalibrationTools::HashedToRingIndex()
   return myMap;
 }
 
+std::map<int,short> EcalRingCalibrationTools::HashedToRingIndexEE() 
+{
+  // In EB the conversion is Ring = (int)HI / 360  
+  std::map<int,short> myMap;
+  myMap.clear();
+
+  if (!isInitializedFromGeometry_) initializeFromGeometry();
+  
+  for (int ix=0;ix<EEDetId::IX_MAX;++ix) {
+    for (int iy=0;iy<EEDetId::IY_MAX;++iy) {
+      for(int zside = -1; zside<2; zside += 2) {
+	if ( EEDetId::validDetId(ix+1,iy+1,zside) ) {
+	  EEDetId myDetId = EEDetId(ix+1,iy+1,zside);
+	  short thisRI = getRingIndex(myDetId);
+	  int thisHI = getHashedIndex(myDetId);
+	  myMap.insert(std::pair<int,short>(thisHI,thisRI));
+	}}}}
+  
+  return myMap;
+}
+
 std::vector<DetId> EcalRingCalibrationTools::getDetIdsInRing(short etaIndex) 
 {
 

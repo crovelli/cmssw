@@ -187,7 +187,7 @@ class ZeeCalibration : public edm::ESProducerLooper {
   ZeePlots* myZeePlots_;
   ZeeRescaleFactorPlots* myZeeRescaleFactorPlots_;
 
-  std::map<int,short> HashedToRingIndexMap;
+  std::map<int,short> HashedToRingIndexMapEE;
 
   // steering parameters
   edm::ParameterSet theParameterSet;

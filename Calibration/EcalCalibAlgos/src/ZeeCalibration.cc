@@ -262,9 +262,9 @@ void ZeeCalibration::beginOfJob(edm::EventSetup const& iSetup) {
 
     } else if (calibMode_ == "SINGLEXTAL") {
       
-      // association between ringindex and hashed index - needed later 
-      HashedToRingIndexMap = EcalRingCalibrationTools::HashedToRingIndex();
-      cout << "size = " << HashedToRingIndexMap.size() << endl;
+      // association between ringindex and hashed index in EE - needed later 
+      HashedToRingIndexMapEE = EcalRingCalibrationTools::HashedToRingIndexEE();
+      cout << "size = " << HashedToRingIndexMapEE.size() << endl;
 
       std::vector<DetId> ringIds = EcalRingCalibrationTools::getOrderedDetIdsInECAL(); 
 
@@ -510,17 +510,22 @@ void ZeeCalibration::endOfJob() {
   // grouped xtals plots 
   for( int k = 0; k<theAlgorithm_->getNumberOfChannels(); k++ ) {       
 
+    // Chiara: to speed up I comment the possibility to exclude border channels from plots for single xtal
     bool isNearCrack = false;    
-    isNearCrack = ( abs( ringNumberCorrector(k) ) == 1 || abs( ringNumberCorrector(k) ) == 25 ||
-		    abs( ringNumberCorrector(k) ) == 26 || abs( ringNumberCorrector(k) ) == 45 ||
-		    abs( ringNumberCorrector(k) ) == 46 || abs( ringNumberCorrector(k) ) == 65 ||
-		    abs( ringNumberCorrector(k) ) == 66 || abs( ringNumberCorrector(k) ) == 85 ||
-		    abs( ringNumberCorrector(k) ) == 86 || abs( ringNumberCorrector(k) ) == 124 );
+    if (calibMode_ != "SINGLEXTAL") {
+      isNearCrack = ( abs( ringNumberCorrector(k) ) == 1 || abs( ringNumberCorrector(k) ) == 25 ||
+		      abs( ringNumberCorrector(k) ) == 26 || abs( ringNumberCorrector(k) ) == 45 ||
+		      abs( ringNumberCorrector(k) ) == 46 || abs( ringNumberCorrector(k) ) == 65 ||
+		      abs( ringNumberCorrector(k) ) == 66 || abs( ringNumberCorrector(k) ) == 85 ||
+		      abs( ringNumberCorrector(k) ) == 86 || abs( ringNumberCorrector(k) ) == 124 );
+    }
 
     
     int newk = k;        // this is to use the same crystals grouping as for the ring case    
-    if (calibMode_ == "SINGLEXTAL") 
-      newk = (HashedToRingIndexMap.find(k))->second;  
+    if (calibMode_ == "SINGLEXTAL") {
+      if (k<61200) newk = k/360;
+      else newk = (HashedToRingIndexMapEE.find(k))->second;
+    }
 
     if(newk<85) {   // EB+ and fill also for EB-
       
@@ -665,9 +670,9 @@ void ZeeCalibration::endOfJob() {
   
   Double_t zero[25] = {0.026};  //interval/sqrt(12)
 
-  for(int j = 0; j <25; j++)
+  for(int j = 0; j <25; j++) {
     h2_coeffVsEtaGrouped_->Fill( xtalEta[j],mean[j]);
-  
+  }  
 
   TProfile *px = h2_coeffVsEta_->ProfileX("coeffVsEtaProfile");
   px->SetXTitle("Eta channel");
@@ -1304,8 +1309,9 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
     
     NewCalibCoeff[ieta] = calibCoeff[ieta] * optimizedCoefficients[ieta];
 
-    h2_chi2_[loopFlag_]->Fill( ringNumberCorrector( ieta ), optimizedChi2[ieta] );
-    h2_iterations_[loopFlag_]->Fill( ringNumberCorrector( ieta ), optimizedIterations[ieta] );
+    int theRNC = ringNumberCorrector( ieta );
+    h2_chi2_[loopFlag_]->Fill( theRNC, optimizedChi2[ieta] );
+    h2_iterations_[loopFlag_]->Fill( theRNC, optimizedIterations[ieta] );
   }
 
   // comparison between new and old coefficients
@@ -1388,16 +1394,12 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
 
 	// if (!ieta%1000) cout << ieta << ", ieta = " << myEBDetId.ieta() << ", iphi = " << myEBDetId.iphi() << ", initCalibCoeff[ieta] = " << initCalibCoeff[ieta] << endl; 	
 
-	if (optimizedCoefficients[ieta]!=1) cout << "check detId: index = " << ieta << ", coeff = " << optimizedCoefficients[ieta] << ", HI = " << myEBDetId.hashedIndex() << endl;
-
       } else if(ringIds[ieta].subdetId() == EcalEndcap){
 	EEDetId myEEDetId(ringIds[ieta]);
 	if(myEEDetId.zside() < 0)
 	  h2_xtalRecalibCoeffEndcapMinus_[loopFlag_]->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), 100 * (calibCoeff[ieta]*initCalibCoeff[ieta] - 1.) );
 	else 
 	  h2_xtalRecalibCoeffEndcapPlus_[loopFlag_]->SetBinContent( myEEDetId.ix(), myEEDetId.iy(), 100 * (calibCoeff[ieta]*initCalibCoeff[ieta] - 1.) );
-
-	if (optimizedCoefficients[ieta]!=1) cout << "check detId: index = " << ieta << ", coeff = " << optimizedCoefficients[ieta] << ", HI = " << myEEDetId.hashedIndex() << endl;
 
 	// if (!ieta%1500) cout << ieta << ", ix = " << myEEDetId.ix() << ", iy = " << myEEDetId.iy() << ", iz = " << myEEDetId.zside() << ", initCalibCoeff[ieta] = " << initCalibCoeff[ieta] << endl;
       }
@@ -1416,11 +1418,15 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
   for ( int k = 0; k<theAlgorithm_->getNumberOfChannels(); k++ ) {
     
     // here module border rings are excluded from the plot 
-    bool isNearCrack = ( abs( ringNumberCorrector(k) ) == 1 || abs( ringNumberCorrector(k) ) == 25 ||
-			 abs( ringNumberCorrector(k) ) == 26 || abs( ringNumberCorrector(k) ) == 45 ||
-			 abs( ringNumberCorrector(k) ) == 46 || abs( ringNumberCorrector(k) ) == 65 ||
-			 abs( ringNumberCorrector(k) ) == 66 || abs( ringNumberCorrector(k) ) == 85 ||
-			 abs( ringNumberCorrector(k) ) == 86 || abs( ringNumberCorrector(k) ) == 124 );
+    // Chiara: to speed up we comment the possibility to remove border crystals from the plots for single xtal
+    bool isNearCrack = false;
+    if (calibMode_ != "SINGLEXTAL") {
+      isNearCrack = ( abs( ringNumberCorrector(k) ) == 1 || abs( ringNumberCorrector(k) ) == 25 ||
+		      abs( ringNumberCorrector(k) ) == 26 || abs( ringNumberCorrector(k) ) == 45 ||
+		      abs( ringNumberCorrector(k) ) == 46 || abs( ringNumberCorrector(k) ) == 65 ||
+		      abs( ringNumberCorrector(k) ) == 66 || abs( ringNumberCorrector(k) ) == 85 ||
+		      abs( ringNumberCorrector(k) ) == 86 || abs( ringNumberCorrector(k) ) == 124 );
+    }
     
     // For ring calibration I leave everything as it was 
     // For single xtal calibration I give the choice to exclude (numCrystalCut_>=0) or not (-1) border xtals
@@ -1430,8 +1436,8 @@ void ZeeCalibration::startingNewLoop ( unsigned int iLoop ) {
     if( calibMode_ != "RING" && calibMode_ != "SINGLEXTAL" ) toBeFilled = true;
     if(toBeFilled){ 
       h1_mcParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
-      if(k<170)  h1_mcEBParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
-      if(k>=170) h1_mcEEParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
+      if(k<61200)  h1_mcEBParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
+      if(k>=61200) h1_mcEEParz_[iLoop]->Fill( initCalibCoeff[k]*calibCoeff[k] -1. );
     }
   }
    
@@ -1658,7 +1664,7 @@ void ZeeCalibration::bookHistograms() {
   h2_coeffVsEtaGrouped_->SetXTitle("|#eta|");
   h2_coeffVsEtaGrouped_->SetYTitle("recalibCoeff");
 
-  h2_zMassVsLoop_= new TH2F("h2_zMassVsLoop","h2_zMassVsLoop",1000,0,40,200,90.,120.);
+  h2_zMassVsLoop_= new TH2F("h2_zMassVsLoop","h2_zMassVsLoop",1000,0,40,200,60.,120.);
 
   h2_zMassDiffVsLoop_= new TH2F("h2_zMassDiffVsLoop","h2_zMassDiffVsLoop",1000,0,40, 100, -1., 1.);
   h2_zMassDiffVsLoop_->SetXTitle("Iteration");
@@ -1749,8 +1755,13 @@ int ZeeCalibration::ringNumberCorrector(int k) {
 
   else if( calibMode_ == "SINGLEXTAL"){
 
-    int ringIndex = (HashedToRingIndexMap.find(k))->second;
-
+    int ringIndex = -1;
+    if (k<61200) {  // EB
+      ringIndex = k/360;
+    } else {
+      ringIndex = (HashedToRingIndexMapEE.find(k))->second;     
+    }
+    
     if(ringIndex>=0 && ringIndex<=84)    index = ringIndex - 85;
     if(ringIndex>=85 && ringIndex<=169)  index = ringIndex - 84;
     if(ringIndex>=170 && ringIndex<=208) index = - ringIndex + 84;
@@ -1822,13 +1833,16 @@ float ZeeCalibration::computeCoefficientDistanceAtIteration( float v1[N_XTAL_TOT
   for(int i =0; i < size; i++) {
     
     // here module border rings are excluded from the plot 
+    // Chiara: To speed-up I comment this possibility for single xtal
     bool isNearCrack = false;
-    isNearCrack = ( abs( ringNumberCorrector(i) ) == 1 || abs( ringNumberCorrector(i) ) == 25 ||
-		    abs( ringNumberCorrector(i) ) == 26 || abs( ringNumberCorrector(i) ) == 45 ||
-		    abs( ringNumberCorrector(i) ) == 46 || abs( ringNumberCorrector(i) ) == 65 ||
-		    abs( ringNumberCorrector(i) ) == 66 || abs( ringNumberCorrector(i) ) == 85 ||
-		    abs( ringNumberCorrector(i) ) == 86 || abs( ringNumberCorrector(i) ) == 124 );
-    
+    if (calibMode_ != "SINGLEXTAL") {
+      isNearCrack = ( abs( ringNumberCorrector(i) ) == 1 || abs( ringNumberCorrector(i) ) == 25 ||
+		      abs( ringNumberCorrector(i) ) == 26 || abs( ringNumberCorrector(i) ) == 45 ||
+		      abs( ringNumberCorrector(i) ) == 46 || abs( ringNumberCorrector(i) ) == 65 ||
+		      abs( ringNumberCorrector(i) ) == 66 || abs( ringNumberCorrector(i) ) == 85 ||
+		      abs( ringNumberCorrector(i) ) == 86 || abs( ringNumberCorrector(i) ) == 124 );
+    }    
+
     // For ring calibration I leave everything as it was 
     // For single xtal calibration I give the choice to exclude (numCrystalCut_>=0) or not (-1) border xtals
     bool toBeFilled = false;
