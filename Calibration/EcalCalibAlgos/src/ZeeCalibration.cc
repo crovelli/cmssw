@@ -153,8 +153,8 @@ ZeeCalibration::ZeeCalibration(const edm::ParameterSet& iConfig) {
   myTree = new TTree("myTree","myTree");
   myTree->Branch("iteration",&loopFlag_,"iteration/I");
   myTree->Branch("isEBEB",&isEBEB,"isEBEB/I");
+  myTree->Branch("isHR9HR9",&isHR9HR9,"isHR9HR9/I");
   myTree->Branch("zMass",&mass4tree,"mass/F");
-  myTree->Branch("zMassDiff",&massDiff4tree,"massDiff/F");
   
   theParameterSet=iConfig;
   EcalIndexingTools* myIndexTool=0;
@@ -426,6 +426,11 @@ void ZeeCalibration::endOfJob() {
   h2_xtalMiscalibCoeffEndcapMinus_ ->Write();
   h2_xtalMiscalibCoeffEndcapPlus_  ->Write();
 
+  h1_ptBarrel_ -> Write();
+  h1_ptEndcap_ -> Write();
+  h1_eta_      -> Write();
+  h1_r9_       -> Write();
+
   // h1_electronCosTheta_SC_->Write();
   // h1_electronCosTheta_TK_->Write();
   // h1_electronCosTheta_SC_TK_->Write();
@@ -445,6 +450,7 @@ void ZeeCalibration::endOfJob() {
       h2_chi2_[i]->Write();
       h2_iterations_[i]->Write();
       h1_zMassBarrel_[i]->Write();
+      h1_zMassEndcap_[i]->Write();
       h2_coeffVsEta_loop[i]->Write();   
     }
   }
@@ -801,12 +807,7 @@ void ZeeCalibration::endOfJob() {
   
   h1_ZCandMult_->Write();
   h1_reco_ZMass_->Write();
-  h2_reco_ZMassVsIter_->Write();
   
-  h1_reco_ZMassCorr_->Write();
-  h1_reco_ZMassCorrBB_->Write();
-  h1_reco_ZMassCorrEE_->Write();
-
   outputFile_->Close();
   
   // myZeePlots_ ->writeEleHistograms();
@@ -1091,6 +1092,12 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
   float eta1 = zeeCandidates[myBestZ].first->getParentSuperCluster()->eta();
   float eta2 = zeeCandidates[myBestZ].second->getParentSuperCluster()->eta();
 
+  float r91  = zeeCandidates[myBestZ].first->getRecoElectron()->r9(); 
+  float r92  = zeeCandidates[myBestZ].second->getRecoElectron()->r9(); 
+
+  float pt1  = zeeCandidates[myBestZ].first->getRecoElectron()->pt(); 
+  float pt2  = zeeCandidates[myBestZ].second->getRecoElectron()->pt(); 
+
   if(fabs(eta1)<1.5) TOTAL_ELECTRONS_IN_BARREL++;
   else TOTAL_ELECTRONS_IN_ENDCAP++;
   if(fabs(eta2)<1.5) TOTAL_ELECTRONS_IN_BARREL++;
@@ -1230,24 +1237,36 @@ ZeeCalibration::duringLoop( const edm::Event& iEvent, const edm::EventSetup& iSe
     mass4tree = ZeeKinematicTools::calculateZMassWithCorrectedElectrons_withTK(zeeCandidates[myBestZ],ele1EnergyCorrection,ele2EnergyCorrection);
     
     h1_reco_ZMass_->Fill(mass4tree);
-    h2_reco_ZMassVsIter_->Fill(loopFlag_,mass4tree);
 
     // PUT f(eta) IN OUR Zee ALGORITHM 
     theAlgorithm_->addEvent(zeeCandidates[myBestZ].first, zeeCandidates[myBestZ].second,MZ*sqrt(ele1EnergyCorrection*ele2EnergyCorrection) );
 
-    // SC energies after f(eta) corrections - fuffa, perche' ora le correzioni sono vuote
-    h1_reco_ZMassCorr_->Fill(mass4tree);
+    // Z mass
     isEBEB=0;
     if (fabs(eta1)<1.5 && fabs(eta2)<1.5 )  
       {     
 	h1_zMassBarrel_[loopFlag_]->Fill(mass4tree);
-	h1_reco_ZMassCorrBB_->Fill(mass4tree);
 	isEBEB=1;
       }
     if (fabs(eta1)>1.5 && fabs(eta2)>1.5 )       
-      h1_reco_ZMassCorrEE_->Fill(mass4tree);
-    
-    //  massDiff4tree = ZeeKinematicTools::calculateZMassWithCorrectedElectrons_withTK(zeeCandidates[myBestZ],ele1EnergyCorrection,ele2EnergyCorrection) - myGenZMass;
+      h1_zMassEndcap_[loopFlag_]->Fill(mass4tree);
+
+    // R9class
+    isHR9HR9=0;
+    if (r91>0.94 && r92>0.94) isHR9HR9 = 1;
+
+    // kinematics
+    if (loopFlag_==0) {
+      if (fabs(eta1)<1.5) h1_ptBarrel_ -> Fill(pt1);
+      else h1_ptEndcap_ -> Fill(pt1);
+      if (fabs(eta2)<1.5) h1_ptBarrel_ -> Fill(pt2);
+      else h1_ptEndcap_ -> Fill(pt2);
+      h1_eta_-> Fill(eta1);
+      h1_eta_-> Fill(eta2);
+      h1_r9_ -> Fill(r91);
+      h1_r9_ -> Fill(r92);
+    }
+
     myTree->Fill();
   }
 
@@ -1527,6 +1546,11 @@ void ZeeCalibration::bookHistograms() {
   h2_xtalMiscalibCoeffEndcapMinus_->SetXTitle("ix");
   h2_xtalMiscalibCoeffEndcapMinus_->SetYTitle("iy");
 
+  h1_ptBarrel_ = new TH1F("h1_ptBarrel_","h1_ptBarrel_", 100,0.,200.);
+  h1_ptEndcap_ = new TH1F("h1_ptEndcap_","h1_ptEndcap_", 100,0.,200.);
+  h1_eta_      = new TH1F("h1_eta_","h1_eta_", 100,-2.5,2.5);
+  h1_r9_       = new TH1F("h1_r9_", "h1_r9_",  100,0.,1.);
+
   for (int i=0;i<25;i++) {
       
     char histoName[50];
@@ -1541,6 +1565,9 @@ void ZeeCalibration::bookHistograms() {
 
     sprintf(histoName,"h1_zMassBarrel_%d",i);
     h1_zMassBarrel_[i] = new TH1F(histoName,histoName, 120,30.,150.);
+
+    sprintf(histoName,"h1_zMassEndcap_%d",i);
+    h1_zMassEndcap_[i] = new TH1F(histoName,histoName, 120,30.,150.);
 
     sprintf(histoName,"h2_chi2_%d",i);
     h2_chi2_[i] = new TH2F(histoName,histoName, 1000,-150,150, 1000, -1, 5);
@@ -1639,23 +1666,6 @@ void ZeeCalibration::bookHistograms() {
   h1_reco_ZMass_->SetXTitle("reco_ZMass (GeV)");
   h1_reco_ZMass_->SetYTitle("events");
 
-  h2_reco_ZMassVsIter_ = new TH2F("reco_ZMassVsIter","Inv. mass of 2 reco Electrons",20,-0.5,19.5,200,0.,150.);
-  h2_reco_ZMassVsIter_->SetXTitle("#iteration");
-  h2_reco_ZMassVsIter_->SetYTitle("reco_ZMass (GeV)");
-  h2_reco_ZMassVsIter_->SetZTitle("events");
-
-  h1_reco_ZMassCorr_ = new TH1F("reco_ZMassCorr","Inv. mass of 2 corrected reco Electrons",200,0.,150.);
-  h1_reco_ZMassCorr_->SetXTitle("reco_ZMass (GeV)");
-  h1_reco_ZMassCorr_->SetYTitle("events");
-
-  h1_reco_ZMassCorrBB_ = new TH1F("reco_ZMassCorrBB","Inv. mass of 2 corrected reco Electrons",200,0.,150.);
-  h1_reco_ZMassCorrBB_->SetXTitle("reco_ZMass (GeV)");
-  h1_reco_ZMassCorrBB_->SetYTitle("events");
-  
-  h1_reco_ZMassCorrEE_ = new TH1F("reco_ZMassCorrEE","Inv. mass of 2 corrected reco Electrons",200,0.,150.);
-  h1_reco_ZMassCorrEE_->SetXTitle("reco_ZMass (GeV)");
-  h1_reco_ZMassCorrEE_->SetYTitle("events");
-  
   h2_coeffVsEta_= new TH2F("h2_calibCoeffVsEta","h2_calibCoeffVsEta",249,-124,125, 200, 0., 2.);
   h2_coeffVsEta_->SetXTitle("Eta channel");
   h2_coeffVsEta_->SetYTitle("recalibCoeff");
@@ -1914,9 +1924,6 @@ void ZeeCalibration::resetHistograms(){
   h1_ZCandMult_-> Reset();
   h1_reco_ZMass_-> Reset();
 
-  h1_reco_ZMassCorr_-> Reset();
-  h1_reco_ZMassCorrBB_-> Reset();
-  h1_reco_ZMassCorrEE_-> Reset();
   h1_occupancyVsEta_-> Reset();
   h1_occupancy_-> Reset();
   h1_occupancyBarrel_-> Reset();
