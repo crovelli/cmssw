@@ -21,7 +21,7 @@ process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(-1)
 )
 
-from Calibration.EcalCalibAlgos.DYJetsToLLPhys14SkimZee_cff import *   
+from Calibration.EcalCalibAlgos.DYJetsToLLPhys14OfficialSkimZee_cff import *   
 process.source = cms.Source("PoolSource",  
                             fileNames = readFilesRM,         
 )
@@ -79,7 +79,6 @@ process.looper.electronSelection = cms.untracked.int32(-1)     # 0-1-2-3-4; -1 t
 process.looper.histoFile = cms.string('myHistograms_test.root')
 process.looper.zeeFile = cms.string('myZeePlots_test.root')
 process.looper.initialMiscalibrationBarrel = cms.untracked.string('miscalib_ring_1.00_0.10.xml')
-#process.looper.initialMiscalibrationBarrel = cms.untracked.string('')
 process.looper.initialMiscalibrationEndcap = cms.untracked.string('')
 process.looper.ZCalib_CalibType = cms.untracked.string('SINGLEXTAL')
 #process.looper.ZCalib_CalibType = cms.untracked.string('RING')
