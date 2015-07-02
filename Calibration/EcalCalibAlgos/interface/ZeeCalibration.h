@@ -168,8 +168,8 @@ class ZeeCalibration : public edm::ESProducerLooper {
   double mass; 
 
   int   isEBEB;
+  int   isHR9HR9;
   float mass4tree;
-  float massDiff4tree;
 
   int read_events;
   
@@ -214,6 +214,11 @@ class ZeeCalibration : public edm::ESProducerLooper {
   TH1F* h_eleEffPhi[2];
   TH1F* h_eleEffPt[2];
 
+  TH1F *h1_ptBarrel_;
+  TH1F *h1_ptEndcap_;
+  TH1F *h1_eta_;
+  TH1F *h1_r9_;
+
   TH1F* h1_seedOverSC_;
   TH1F* h1_preshowerOverSC_;
 
@@ -221,14 +226,7 @@ class ZeeCalibration : public edm::ESProducerLooper {
   // TH1F* h1_zEtaResol_;
   // TH1F* h1_zPhiResol_;
   TH1F* h1_reco_ZMass_;
-  TH2F* h2_reco_ZMassVsIter_;
 
-  TH1F* h1_reco_ZMassCorr_;
-
-  TH1F* h1_reco_ZMassCorrBB_;
-  TH1F* h1_reco_ZMassCorrEE_;
-  TH1F* h1_reco_ZMassGood_;
-  TH1F* h1_reco_ZMassBad_;
   TH1F* h1_ZCandMult_;
   TH1F* h1_RMin_;
   TH1F* h1_RMinZ_;
@@ -269,6 +267,7 @@ class ZeeCalibration : public edm::ESProducerLooper {
   TH2F* h2_iterations_[25];
 
   TH1F* h1_zMassBarrel_[25];
+  TH1F* h1_zMassEndcap_[25];
   TH1F *h1_calibCoeffBeforeBarrel_[25];
   TH1F *h1_calibCoeffAfterBarrel_[25];
   TH1F *h1_initCalibCoeffBarrel_[25];
