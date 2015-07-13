@@ -12,6 +12,8 @@
 #include <vector>
 #include <string>
 #include <TH1.h>
+#include <TH2.h>
+#include <map>
 
 #include "Calibration/Tools/interface/CalibElectron.h"
 
@@ -23,7 +25,7 @@
 */
 
 #define nMaxIterations 50
-#define nMaxChannels 250
+#define nMaxChannels 75848 
 
 
 
@@ -34,6 +36,7 @@ class ZIterativeAlgorithmWithFit
     TH1* weightedRescaleFactor[nMaxIterations][nMaxChannels];
     TH1* unweightedRescaleFactor[nMaxIterations][nMaxChannels];
     TH1* weight[nMaxIterations][nMaxChannels];
+    TH2* weightedZmassVsChannel[nMaxIterations];  
   };
 
   /// Default constructor
@@ -55,7 +58,7 @@ class ZIterativeAlgorithmWithFit
   
   bool iterate();
 
-  bool addEvent(calib::CalibElectron*, calib::CalibElectron*, float);
+  bool addEvent(calib::CalibElectron*, calib::CalibElectron*, float, float);
 
   const ZIterativeAlgorithmWithFitPlots* getHistos() const { return thePlots_; }
 
@@ -71,9 +74,9 @@ class ZIterativeAlgorithmWithFit
 
   const std::vector<int>& getOptimizedIterations() const { return optimizedIterations_; }
 
-  const std::vector<float>& getWeightSum() const { return weight_sum_; }
-
-  const std::vector<float>& getEpsilonSum() const { return calib_fac_; }
+  const std::vector<float>& getWeightSum() const { return weight_sum_; } 
+  
+  const std::vector<float>& getEpsilonSum() const { return calib_fac_; } 
 
   //Helper Methods
 
@@ -107,9 +110,9 @@ class ZIterativeAlgorithmWithFit
 
   void recalculateWeightsEnergies(calib::CalibElectron* electron); 
 
-  void getWeight(unsigned int evid,std::pair<calib::CalibElectron*,calib::CalibElectron*>, float);
+  void getWeight(unsigned int evid,std::pair<calib::CalibElectron*,calib::CalibElectron*>, float, float);
 
-  void getWeight(unsigned int evid,calib::CalibElectron* ele,float);
+  void getWeight(unsigned int evid,calib::CalibElectron* ele,float, float);
 
   void bookHistograms();
 
@@ -123,6 +126,8 @@ class ZIterativeAlgorithmWithFit
 
   unsigned int currentEvent_;
   unsigned int currentIteration_;
+
+  std::map<int,short> HashedToRingIndexMap;
 
   std::vector< std::pair<calib::CalibElectron*,calib::CalibElectron*> > electrons_;
 

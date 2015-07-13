@@ -19,6 +19,7 @@
 #include "TFile.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TProfile.h"
 #include "TF1.h"
 #include "TRandom.h"
 
@@ -30,7 +31,7 @@
 
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 
-ZeeRescaleFactorPlots::ZeeRescaleFactorPlots( char* fileName )
+ZeeRescaleFactorPlots::ZeeRescaleFactorPlots( const char* fileName )
 {
 
   fileName_ = fileName;
@@ -56,22 +57,29 @@ void ZeeRescaleFactorPlots::writeHistograms(ZIterativeAlgorithmWithFit* theAlgor
   
   const ZIterativeAlgorithmWithFit::ZIterativeAlgorithmWithFitPlots* algoHistos = theAlgorithm_->getHistos();
 
-  for (int iIteration=0;iIteration<theAlgorithm_->getNumberOfIterations();iIteration++)
+  for (int iIteration=0;iIteration<theAlgorithm_->getNumberOfIterations();iIteration++) {
     for (int iChannel=0;iChannel<theAlgorithm_->getNumberOfChannels();iChannel++)
       {
-
-	if(iChannel%20==0){
+	
+	if(iChannel%360==0){
 	  
 	  file_ -> cd();
 	  
 	  algoHistos->weightedRescaleFactor[iIteration][iChannel]->Write();
 	  algoHistos->unweightedRescaleFactor[iIteration][iChannel]->Write();
 	  algoHistos->weight[iIteration][iChannel]->Write();
-	}
-
-
+	}	
       }
 
+    algoHistos->weightedZmassVsChannel[iIteration]->Write();       
+    char profNameZ[300];
+    sprintf(profNameZ,  "WeightedZmassVsChannelProfile_Iteration_%d",iIteration);
+    TProfile *px = algoHistos->weightedZmassVsChannel[iIteration]->ProfileX(profNameZ);
+    px->SetXTitle("Eta channel");
+    px->SetYTitle("Zmass");
+    px->Write();
+
+  }
 
 }
 
