@@ -1,0 +1,68 @@
+Task status:						COMPLETED
+Glidemon monitoring URL:				http://glidemon.web.cern.ch/glidemon/jobs.php?taskname=150711_144622%3Acrovelli_crab_DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX
+Dashboard monitoring URL:				http://dashb-cms-job.cern.ch/dashboard/templates/task-analysis/#user=crab&refresh=0&table=Jobs&p=1&records=25&activemenu=2&status=&site=&tid=150711_144622%3Acrovelli_crab_DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX
+Details:  	     					finished      100.0% (53/53)
+
+crab report
+1854 files have been processed
+28827486 events have been read
+3337195 events have been written
+
+
+-------------------------------------------------------------------------------------------
+
+sum of dataset weights is 7.94985e+08
+sum of dataset weights is 1.66971e+09
+sum of dataset weights is 1.12688e+10
+sum of dataset weights is 1.03449e+10
+sum of dataset weights is 1.18523e+09
+sum of dataset weights is 2.50293e+09
+sum of dataset weights is 1.03192e+10
+sum of dataset weights is 3.27414e+08
+sum of dataset weights is 1.23158e+10 
+sum of dataset weights is 1.19767e+10
+sum of dataset weights is 1.1925e+10
+sum of dataset weights is 1.21849e+10
+sum of dataset weights is 1.2999e+10
+sum of dataset weights is 1.84296e+08
+sum of dataset weights is 1.27776e+10
+sum of dataset weights is 1.25821e+10
+sum of dataset weights is 1.22705e+10
+sum of dataset weights is 1.22895e+10
+sum of dataset weights is 2.37799e+09
+sum of dataset weights is 7.05648e+06
+sum of dataset weights is 8.45932e+08
+sum of dataset weights is 2.11557e+08
+sum of dataset weights is 4.19925e+08
+sum of dataset weights is 1.33371e+10
+sum of dataset weights is 1.32274e+10
+sum of dataset weights is 1.32441e+10
+sum of dataset weights is 9.8627e+09
+sum of dataset weights is 9.05126e+09
+sum of dataset weights is 7.16286e+09
+sum of dataset weights is 1.96726e+09
+sum of dataset weights is 1.23346e+10
+sum of dataset weights is 1.22381e+10
+sum of dataset weights is 1.69123e+09
+sum of dataset weights is 1.19795e+10
+sum of dataset weights is 1.17482e+10
+sum of dataset weights is 4.24055e+09
+sum of dataset weights is 4.82941e+07
+sum of dataset weights is 1.04979e+10
+sum of dataset weights is 9.8017e+09
+sum of dataset weights is 3.97955e+09
+sum of dataset weights is 2.39278e+09
+sum of dataset weights is 1.38724e+10
+sum of dataset weights is 1.36365e+10
+sum of dataset weights is 1.42694e+10
+sum of dataset weights is 1.40404e+10
+sum of dataset weights is 1.35819e+10
+sum of dataset weights is 1.37212e+10
+sum of dataset weights is 1.38904e+10
+sum of dataset weights is 1.39414e+10
+sum of dataset weights is 1.39904e+10
+sum of dataset weights is 1.36287e+10
+sum of dataset weights is 1.26928e+10
+sum of dataset weights is 4.9937e+08
+
+====> 4.54351e+11 <====
