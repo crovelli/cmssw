@@ -135,6 +135,7 @@ void ZIterativeAlgorithmWithFit::bookHistograms() {
       }
       thePlots_->weightedRescaleFactor[i2][i1]->GetXaxis()->SetTitle("Rescale factor");
       thePlots_->weightedRescaleFactor[i2][i1]->GetYaxis()->SetTitle("a.u.");
+      thePlots_->weightedRescaleFactor[i2][i1]->Sumw2();
 
       // UnweightedRescaling factor (rescale distribution without weight)
       sprintf(histoName,  "UnweightedRescaleFactor_channel_%d_Iteration_%d",i1, i2);
@@ -150,6 +151,7 @@ void ZIterativeAlgorithmWithFit::bookHistograms() {
       thePlots_->unweightedRescaleFactor[i2][i1] = new TH1F(histoName, histoTitle, NBINS_LOWETA, MIN_RESCALE, MAX_RESCALE); 
       thePlots_->unweightedRescaleFactor[i2][i1]->GetXaxis()->SetTitle("Rescale factor");
       thePlots_->unweightedRescaleFactor[i2][i1]->GetYaxis()->SetTitle("a.u.");
+      thePlots_->unweightedRescaleFactor[i2][i1]->Sumw2();
 
       // Weights - energy fraction in the region
       sprintf(histoName, "Weight_channel_%d_Iteration_%d",i1, i2);
@@ -157,6 +159,7 @@ void ZIterativeAlgorithmWithFit::bookHistograms() {
       thePlots_->weight[i2][i1] = new TH1F(histoName, histoTitle, 100, 0., 1.);
       thePlots_->weight[i2][i1]->GetXaxis()->SetTitle("Weight");
       thePlots_->weight[i2][i1]->GetYaxis()->SetTitle("a.u.");
+      thePlots_->weight[i2][i1]->Sumw2();
     }
 
     char histoNameZ[200];
@@ -166,6 +169,7 @@ void ZIterativeAlgorithmWithFit::bookHistograms() {
     thePlots_->weightedZmassVsChannel[i2] = new TH2F(histoNameZ, histoTitleZ, channels_, 0., channels_, 100, 40., 140.);
     thePlots_->weightedZmassVsChannel[i2]->GetXaxis()->SetTitle("module");
     thePlots_->weightedZmassVsChannel[i2]->GetYaxis()->SetTitle("Zmass");      
+    thePlots_->weightedZmassVsChannel[i2]->Sumw2();
   }
 }
 
