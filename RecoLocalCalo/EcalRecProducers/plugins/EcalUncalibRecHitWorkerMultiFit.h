@@ -79,7 +79,6 @@ class EcalUncalibRecHitWorkerMultiFit final : public EcalUncalibRecHitWorkerBase
                 edm::ESHandle<EcalSampleMask> sampleMaskHand_;                
 
 		// weight method for alternative amplitude 
-                // chiara 
                 bool saveWeightsAmpl_;  
                 EcalUncalibRecHitRecWeightsAlgo<EBDataFrame> weightsAmplitude_barrel_; 
                 EcalUncalibRecHitRecWeightsAlgo<EEDataFrame> weightsAmplitude_endcap_; 
