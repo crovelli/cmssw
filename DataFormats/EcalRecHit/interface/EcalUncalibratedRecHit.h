@@ -30,6 +30,7 @@ class EcalUncalibratedRecHit {
 
   float amplitude() const { return amplitude_; }
   float amplitudeError() const { return amplitudeError_; }
+  float secondAmplitude() const { return secondAmplitude_; }  
   float pedestal() const { return pedestal_; }
   float jitter() const { return jitter_; }
   float chi2() const { return chi2_; }
@@ -42,6 +43,7 @@ class EcalUncalibratedRecHit {
 
   void setAmplitude( float amplitude ) { amplitude_ = amplitude; }
   void setAmplitudeError( float amplitudeerror ) { amplitudeError_ = amplitudeerror; }
+  void setSecondAmplitude( float samplitude ) { secondAmplitude_ = samplitude; }  
   void setPedestal( float pedestal ) { pedestal_ = pedestal; }
   void setJitter( float jitter ) { jitter_ = jitter; }
   void setChi2( float chi2 ) { chi2_ = chi2; }
@@ -61,6 +63,7 @@ class EcalUncalibratedRecHit {
  private:
   float amplitude_;           //< Reconstructed amplitude
   float amplitudeError_;      //< Reconstructed amplitude uncertainty
+  float secondAmplitude_;     //< amplitude from weights/other method      
   float pedestal_;            //< Reconstructed pedestal
   float jitter_;              //< Reconstructed time jitter
   float chi2_;                //< Chi2 of the pulse

@@ -27,6 +27,8 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
+#include <iostream> 
+
 EcalRecHitProducer::EcalRecHitProducer(const edm::ParameterSet& ps)
 {
        
@@ -73,6 +75,8 @@ EcalRecHitProducer::EcalRecHitProducer(const edm::ParameterSet& ps)
 	edm::ParameterSet cleaningPs = 
 	  ps.getParameter<edm::ParameterSet>("cleaningConfig");
 	cleaningAlgo_ = new EcalCleaningAlgo(cleaningPs);
+
+	//std::cout << "chiara: RechitProducer" << std::endl;
 }
 
 EcalRecHitProducer::~EcalRecHitProducer()
@@ -122,7 +126,10 @@ EcalRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es)
         {
                 // loop over uncalibrated rechits to make calibrated ones
                 for(EBUncalibratedRecHitCollection::const_iterator it  = ebUncalibRecHits->begin(); it != ebUncalibRecHits->end(); ++it) {
-                        worker_->run(evt, *it, *ebRecHits);
+		  //std::cout << "chiara: prima del worker, EB" << std::endl;
+		  //std::cout << "chiara: ampiezza = " << (*it).amplitude() << ", secondamplitude = " << (*it).secondAmplitude() << ", id = " << (*it).id().rawId() << std::endl;
+		  worker_->run(evt, *it, *ebRecHits);
+		  //std::cout << "chiara: dopo worker" << std::endl;
                 }
         }
 
@@ -130,7 +137,9 @@ EcalRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es)
         {
                 // loop over uncalibrated rechits to make calibrated ones
                 for(EEUncalibratedRecHitCollection::const_iterator it  = eeUncalibRecHits->begin(); it != eeUncalibRecHits->end(); ++it) {
-                        worker_->run(evt, *it, *eeRecHits);
+		  //std::cout << "chiara: prima del worker, EE" << std::endl;
+		  //std::cout << "chiara: ampiezza = " << (*it).amplitude() << ", secondamplitude = " << (*it).secondAmplitude() << ", id = " << (*it).id().rawId() << std::endl;
+		  worker_->run(evt, *it, *eeRecHits);
                 }
         }
 

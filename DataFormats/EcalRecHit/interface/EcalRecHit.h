@@ -60,13 +60,15 @@ public:
           kESTS15Sigmas
   };
 
-  EcalRecHit(): energy_(0), time_(0), flagBits_(0) {}
+ EcalRecHit(): energy_(0), secondEnergy_(energy_), time_(0), flagBits_(0) {}
   // by default a recHit is greated with no flag
   explicit EcalRecHit(const DetId& id, float energy, float time, uint32_t extra = 0, uint32_t flagBits = 0):
-    id_(id), energy_(energy), time_(time), flagBits_(flagBits), extra_(extra) {}
+  id_(id), energy_(energy), secondEnergy_(energy_), time_(time), flagBits_(flagBits), extra_(extra) {}
 
   float energy() const { return energy_; }
   void setEnergy(float energy) { energy_=energy; }
+  float secondEnergy() const { return secondEnergy_; }
+  void setSecondEnergy(float secondEnergy) { secondEnergy_=secondEnergy; }
   float time() const { return time_; }
   void setTime(float time) { time_ = time; }
   const DetId& detid() const { return id_; }
@@ -217,6 +219,7 @@ private:
   // from calorechit
   DetId id_;
   float energy_;
+  float secondEnergy_;
   float time_;
 
   /// store rechit condition (see Flags enum) in a bit-wise way 

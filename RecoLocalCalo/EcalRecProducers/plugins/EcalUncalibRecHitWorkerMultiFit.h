@@ -12,6 +12,7 @@
 #include "RecoLocalCalo/EcalRecProducers/interface/EcalUncalibRecHitWorkerBaseClass.h"
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalUncalibRecHitMultiFitAlgo.h"
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalUncalibRecHitTimeWeightsAlgo.h"
+#include "RecoLocalCalo/EcalRecAlgos/interface/EcalUncalibRecHitRecWeightsAlgo.h"
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalUncalibRecHitRecChi2Algo.h"
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalUncalibRecHitRatioMethodAlgo.h"
 #include "FWCore/Framework/interface/ESHandle.h"
@@ -28,7 +29,8 @@
 #include "CondFormats/EcalObjects/interface/EcalPulseShapes.h"
 #include "CondFormats/EcalObjects/interface/EcalPulseCovariances.h"
 #include "RecoLocalCalo/EcalRecAlgos/interface/EigenMatrixTypes.h"
-
+#include "SimCalorimetry/EcalSimAlgos/interface/EBShape.h"
+#include "SimCalorimetry/EcalSimAlgos/interface/EEShape.h"
 
 namespace edm {
         class Event;
@@ -75,6 +77,14 @@ class EcalUncalibRecHitWorkerMultiFit final : public EcalUncalibRecHitWorkerBase
 
                 // determine which of the samples must actually be used by ECAL local reco
                 edm::ESHandle<EcalSampleMask> sampleMaskHand_;                
+
+		// weight method for alternative amplitude 
+                // chiara 
+                bool saveWeightsAmpl_;  
+                EcalUncalibRecHitRecWeightsAlgo<EBDataFrame> weightsAmplitude_barrel_; 
+                EcalUncalibRecHitRecWeightsAlgo<EEDataFrame> weightsAmplitude_endcap_; 
+                const EEShape testbeamEEShape; 
+                const EBShape testbeamEBShape;        
                 
                 // time algorithm to be used to set the jitter and its uncertainty
                 enum TimeAlgo {noMethod, ratioMethod, weightsMethod};

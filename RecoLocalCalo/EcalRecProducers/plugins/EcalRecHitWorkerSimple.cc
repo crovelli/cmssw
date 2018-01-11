@@ -11,6 +11,7 @@
 #include "CalibCalorimetry/EcalLaserCorrection/interface/EcalLaserDbRecord.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "CommonTools/Utils/interface/StringToEnumValue.h"
+#include <iostream>
 
 EcalRecHitWorkerSimple::EcalRecHitWorkerSimple(const edm::ParameterSet&ps, edm::ConsumesCollector& c) :
   EcalRecHitWorkerBaseClass(ps,c)
@@ -54,6 +55,8 @@ EcalRecHitWorkerSimple::EcalRecHitWorkerSimple(const edm::ParameterSet&ps, edm::
     flagmask_|=    0x1<<EcalRecHit::kKilled;
     flagmask_|=    0x1<<EcalRecHit::kTPSaturated;
     flagmask_|=    0x1<<EcalRecHit::kL1SpikeFlag; 
+
+    //std::cout << "chiara: dentro EcalRecHitWorkerSimple" << std::endl;
 }
 
 
@@ -78,7 +81,7 @@ EcalRecHitWorkerSimple::run( const edm::Event & evt,
                 EcalRecHitCollection & result )
 {
     DetId detid=uncalibRH.id();
-    
+    //std::cout << "chiara: Working with amplitude " << uncalibRH.amplitude() << ", rawId = " << detid.rawId() << std::endl;
     EcalChannelStatusMap::const_iterator chit = chStatus->find(detid);
     EcalChannelStatusCode::Code  dbstatus = chit->getStatusCode();
     
@@ -143,11 +146,11 @@ EcalRecHitWorkerSimple::run( const edm::Event & evt,
                                                       (itimeconst + offsetTime), 
                                                       /*recoflags_ 0*/ 
                                                       flagBits) );
-	
+	//std::cout << "chiara: usciti dall'algo: rechit energy = " << myrechit.energy() << ", secondEnergy = " << myrechit.secondEnergy() << std::endl;
         if (detid.subdetId() == EcalBarrel && (lasercalib < EBLaserMIN_ || lasercalib > EBLaserMAX_)) 
-            myrechit.setFlag(EcalRecHit::kPoorCalib);
+	      myrechit.setFlag(EcalRecHit::kPoorCalib);
         if (detid.subdetId() == EcalEndcap && (lasercalib < EELaserMIN_ || lasercalib > EELaserMAX_)) 
-            myrechit.setFlag(EcalRecHit::kPoorCalib);
+	      myrechit.setFlag(EcalRecHit::kPoorCalib);
         result.push_back(myrechit);
 	}
 

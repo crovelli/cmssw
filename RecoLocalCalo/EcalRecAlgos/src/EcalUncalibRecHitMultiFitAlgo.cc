@@ -5,6 +5,8 @@
 #include "CondFormats/EcalObjects/interface/EcalPedestals.h"
 #include "CondFormats/EcalObjects/interface/EcalGainRatios.h"
 
+#include <iostream>
+
 EcalUncalibRecHitMultiFitAlgo::EcalUncalibRecHitMultiFitAlgo() : 
   _computeErrors(true),
   _doPrefit(false),
@@ -27,6 +29,8 @@ EcalUncalibRecHitMultiFitAlgo::EcalUncalibRecHitMultiFitAlgo() :
 
 /// compute rechits
 EcalUncalibratedRecHit EcalUncalibRecHitMultiFitAlgo::makeRecHit(const EcalDataFrame& dataFrame, const EcalPedestals::Item * aped, const EcalMGPAGainRatio * aGain, const SampleMatrixGainArray &noisecors, const FullSampleVector &fullpulse, const FullSampleMatrix &fullpulsecov, const BXVector &activeBX) {
+
+  // std::cout << "chiara: dentro makeRecHit => quello che passo e' " << dataFrame.id().rawId() << std::endl;
 
   uint32_t flags = 0;
   
@@ -208,6 +212,8 @@ EcalUncalibratedRecHit EcalUncalibRecHitMultiFitAlgo::makeRecHit(const EcalDataF
   double jitter = 0.;
   
   EcalUncalibratedRecHit rh( dataFrame.id(), amplitude , pedval, jitter, chisq, flags );
+  //std::cout << "chiara: dentro makeRecHit => quello che ho nel rechit e' " << rh.id().rawId() << " => " << dataFrame.id().rawId() << std::endl;
+  //std::cout << "chiara: dentro makeRecHit => ampiezza nel rechit " << rh.amplitude() << std::endl;
   rh.setAmplitudeError(amperr);
   
   if (!usePrefit) {

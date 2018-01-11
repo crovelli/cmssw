@@ -42,10 +42,14 @@ class EcalRecHitSimpleAlgo : public EcalRecHitAbsAlgo {
 
     float clockToNsConstant = 25;
     float energy = uncalibRH.amplitude()*adcToGeVConstant_*intercalibConstant;
+    float secondEnergy = uncalibRH.secondAmplitude()*adcToGeVConstant_*intercalibConstant;
     float time   = uncalibRH.jitter() * clockToNsConstant + timeIntercalib;
 
+    //std::cout << "Chiara: dentro EcalRecHitSimpleAlgo => amplitude = "  << uncalibRH.amplitude() << ", energy = " << energy  << std::endl;
+    //std::cout << "Chiara: dentro EcalRecHitSimpleAlgo => 2amplitude = " << uncalibRH.secondAmplitude() << ", 2energy = " << secondEnergy  << std::endl;
     EcalRecHit rh( uncalibRH.id(), energy, time );
     rh.setChi2( uncalibRH.chi2() );
+    rh.setSecondEnergy(secondEnergy);
     rh.setEnergyError( uncalibRH.amplitudeError()*adcToGeVConstant_*intercalibConstant);
     /* rh.setOutOfTimeEnergy( uncalibRH.outOfTimeEnergy() * adcToGeVConstant_ * intercalibConstant ); */
     /* rh.setOutOfTimeChi2( uncalibRH.outOfTimeChi2() ); */

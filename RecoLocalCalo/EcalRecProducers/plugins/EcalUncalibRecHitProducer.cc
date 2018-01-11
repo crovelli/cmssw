@@ -19,6 +19,8 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Utilities/interface/Algorithms.h"
 
+#include <iostream> 
+
 EcalUncalibRecHitProducer::EcalUncalibRecHitProducer(const edm::ParameterSet& ps)
 {
         ebHitCollection_  = ps.getParameter<std::string>("EBhitCollection");
@@ -117,12 +119,21 @@ EcalUncalibRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
         auto eeUncalibRechits = std::make_unique<EEUncalibratedRecHitCollection>();
 
         // loop over EB digis
-        if (ebDigis)
-            worker_->run(evt, *ebDigis, *ebUncalibRechits);
+        if (ebDigis){
+	  //std::cout << "chiara: prima del worker uncalib" << std::endl;
+	  worker_->run(evt, *ebDigis, *ebUncalibRechits);
+	  //std::cout << "chiara: dopo worker uncalib" << std::endl;
+	}
 
         // loop over EB digis
-        if (eeDigis)
-            worker_->run(evt, *eeDigis, *eeUncalibRechits);
+        if (eeDigis){
+	  //std::cout << "chiara: prima del worker uncalib" << std::endl;
+	  worker_->run(evt, *eeDigis, *eeUncalibRechits);
+	  //std::cout << "chiara: dopo worker uncalib" << std::endl;
+	}
+
+	//for(EBUncalibratedRecHitCollection::const_iterator it  = ebUncalibRechits->begin(); it != ebUncalibRechits->end(); ++it) 
+	//  std::cout << "chiara, check: EB hits: " << it->amplitude() << ", " << it->id().rawId() << std::endl; 
 
         // put the collection of recunstructed hits in the event
         evt.put(std::move(ebUncalibRechits), ebHitCollection_);

@@ -1,5 +1,6 @@
 <lcgdict>
-  <class name="EcalUncalibratedRecHit" ClassVersion="12">
+  <class name="EcalUncalibratedRecHit" ClassVersion="13">
+   <version ClassVersion="13" checksum="1876177324"/>
    <version ClassVersion="12" checksum="343844348"/>
    <version ClassVersion="11" checksum="4183938955"/>
   </class>
@@ -11,10 +12,11 @@
   <class name="edm::RefProd<edm::SortedCollection<EcalUncalibratedRecHit,edm::StrictWeakOrdering<EcalUncalibratedRecHit> > >"/>
   <class name="edm::StrictWeakOrdering<EcalUncalibratedRecHit>"/> <!-- Root6 -->
 
-  <class name="EcalRecHit" ClassVersion="12">
+  <class name="EcalRecHit" ClassVersion="13">
    <version ClassVersion="10" checksum="283504841"/>
    <version ClassVersion="11" checksum="3356791847"/>
    <version ClassVersion="12" checksum="3356791847"/>
+   <version ClassVersion="13" checksum="1728902662"/>
   </class>
   <enum name="EcalRecHit::Flags"/>
   <enum name="EcalRecHit::ESFlags"/>
