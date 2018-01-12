@@ -90,6 +90,7 @@ EcalUncalibRecHitWorkerRatio::run( const edm::Event & evt,
           EcalUncalibRecHitRatioMethodAlgo<EEDataFrame>::CalculatedRecHit crh =
 	                          uncalibMaker_endcap_.getCalculatedRecHit();
           uncalibRecHit.setAmplitude( crh.amplitudeMax );
+	  uncalibRecHit.setSecondAmplitude( crh.amplitudeMax );
           uncalibRecHit.setJitter( crh.timeMax - 5 );
           uncalibRecHit.setJitterError( std::sqrt(pow(crh.timeError,2) + 
 				        std::pow(EEtimeConstantTerm_,2)/
@@ -111,6 +112,7 @@ EcalUncalibRecHitWorkerRatio::run( const edm::Event & evt,
 	    uncalibMaker_barrel_.getCalculatedRecHit();
 
           uncalibRecHit.setAmplitude( crh.amplitudeMax );
+          uncalibRecHit.setSecondAmplitude( crh.amplitudeMax );
 	  if(gainSwitch){
 	    // introduce additional 1ns shift
 	    uncalibRecHit.setJitter( crh.timeMax - 5 - 0.04 );
