@@ -294,7 +294,7 @@ EcalUncalibRecHitWorkerMultiFit::run( const edm::Event & evt,
     for (auto itdg = digis.begin(); itdg != digis.end(); ++itdg)
     {
         DetId detid(itdg->id());
-	// std::cout << "chiara: all'inizio di tutto: " << detid.rawId() << std::endl;
+	//std::cout << "chiara: all'inizio del workerMultifit: " << detid.rawId() << std::endl;
 
         const EcalSampleMask *sampleMask_ = sampleMaskHand_.product();                
         
@@ -356,15 +356,15 @@ EcalUncalibRecHitWorkerMultiFit::run( const edm::Event & evt,
         }
     
         // === amplitude computation ===
-
+	
         if ( lastSampleBeforeSaturation == 4 ) { // saturation on the expected max sample
             result.emplace_back((*itdg).id(), 4095*12, 0, 0, 0);
             auto & uncalibRecHit = result.back();
             uncalibRecHit.setFlagBit( EcalUncalibratedRecHit::kSaturated );
 	    // do not propagate the default chi2 = -1 value to the calib rechit (mapped to 64), set it to 0 when saturation
             uncalibRecHit.setChi2(0);
-	    uncalibRecHit.setSecondAmplitude( uncalibRecHit.amplitude() );    // chiara
-	    // std::cout << "chiara: ampiezza dentro il worker, caso saturato = " << uncalibRecHit.amplitude() << std::endl;
+	    uncalibRecHit.setSecondAmplitude( uncalibRecHit.amplitude() );    
+	    //std::cout << "chiara: ampiezza dentro il worker, caso saturato = " << uncalibRecHit.amplitude() << std::endl;
         } else if ( lastSampleBeforeSaturation >= -1 ) { // saturation on other samples: cannot extrapolate from the fourth one
             int gainId = ((EcalDataFrame)(*itdg)).sample(5).gainId();
             if (gainId==0) gainId=3;
@@ -376,17 +376,15 @@ EcalUncalibRecHitWorkerMultiFit::run( const edm::Event & evt,
             uncalibRecHit.setFlagBit( EcalUncalibratedRecHit::kSaturated );
             // do not propagate the default chi2 = -1 value to the calib rechit (mapped to 64), set it to 0 when saturation
             uncalibRecHit.setChi2(0);
-	    uncalibRecHit.setSecondAmplitude( uncalibRecHit.amplitude() );    // chiara
-	    // std::cout << "chiara: ampiezza dentro il worker, caso saturato2 = " << uncalibRecHit.amplitude() << std::endl;
+	    uncalibRecHit.setSecondAmplitude( uncalibRecHit.amplitude() );    
+	    //std::cout << "chiara: ampiezza dentro il worker, caso saturato2 = " << uncalibRecHit.amplitude() << std::endl;
         } else {
             // multifit
 	      const SampleMatrixGainArray &noisecors = noisecor(barrel);
             
             result.push_back(multiFitMethod_.makeRecHit(*itdg, aped, aGain, noisecors, fullpulse, fullpulsecov, activeBX));
-	    // std::cout << "chiara: il detId di partenza e' (dopo che ho creato dei rechit) " << detid.rawId() << std::endl;
             auto & uncalibRecHit = result.back();
-	    // std::cout << "chiara: rileggendolo dal rechit e' -> detId = " << uncalibRecHit.id().rawId() << std::endl;
-	    // std::cout << "chiara: ampiezza dentro il worker, leggendo dal rechit = " << uncalibRecHit.amplitude() << std::endl;
+	    //std::cout << "chiara: dentro il worker, rileggendo dal rechit: detId =  " << uncalibRecHit.id().rawId() << ", ampiezza = " << uncalibRecHit.amplitude() << std::endl;
 
 	    // amplitude from weights for SR@PF - if wanted
 	    if ( saveWeightsAmpl_ ) {     
@@ -396,37 +394,46 @@ EcalUncalibRecHitWorkerMultiFit::run( const edm::Event & evt,
 	      EcalTBWeights::EcalTBWeightMap const & wgtsMap = wgts->getMap();
 	      EcalTBWeights::EcalTBWeightMap::const_iterator wit;
 	      wit = wgtsMap.find( std::make_pair(*gid,tdcid) );  
+
 	      if( wit == wgtsMap.end() ) {      
 		edm::LogError("EcalUncalibRecHitError") << "No weights found for EcalGroupId: "        
 							<< gid->id() << " and  EcalTDCId: " << tdcid   
 							<< "\n  skipping digi with id: " << detid.rawId();    
-		std::cout << "chiara: entro nel posto incriminato" << std::endl;
-		result.pop_back(); // chiara, ok cosi'? 
-		continue;
-              }
-	      const EcalWeightSet& wset = wit->second; // this is the EcalWeightSet       
+		//std::cout << "chiara: entro nel posto incriminato" << std::endl;
+		// result.pop_back(); // chiara, preso da sotto
+		// continue;          // chiara, preso da sotto 
+		// return false;      // preso da WorkerGlobal
+		uncalibRecHit.setSecondAmplitude( uncalibRecHit.amplitude() );
 
-	      const EcalWeightSet::EcalWeightMatrix& mat1 = wset.getWeightsBeforeGainSwitch(); 
-              const EcalWeightSet::EcalWeightMatrix& mat2 = wset.getWeightsAfterGainSwitch();  
-	      weights[0] = &mat1;            
-	      weights[1] = &mat2; 
+              } else {
 
-              if (detid.subdetId()==EcalEndcap) {
-                EcalUncalibratedRecHit wrhit = (weightsAmplitude_endcap_.makeRecHit(*itdg, pedVec, pedRMSVec, gainRatios, weights, testbeamEEShape)); 
-		// std::cout << "chiara: mentre cambio: weight " << wrhit.amplitude() << " " << uncalibRecHit.amplitude() << " " << uncalibRecHit.id().rawId() << std::endl;
-                uncalibRecHit.setSecondAmplitude( wrhit.amplitude() ); 
-              } else {  
-                EcalUncalibratedRecHit wrhit = (weightsAmplitude_barrel_.makeRecHit(*itdg, pedVec, pedRMSVec, gainRatios, weights, testbeamEBShape)); 
-		//std::cout << "chiara: mentre cambio: weight " << wrhit.amplitude() << " " << uncalibRecHit.amplitude() << " " << uncalibRecHit.id().rawId() << std::endl;
-                uncalibRecHit.setSecondAmplitude( wrhit.amplitude() ); 
-              }
+		const EcalWeightSet& wset = wit->second; // this is the EcalWeightSet       
+
+		const EcalWeightSet::EcalWeightMatrix& mat1 = wset.getWeightsBeforeGainSwitch(); 
+		const EcalWeightSet::EcalWeightMatrix& mat2 = wset.getWeightsAfterGainSwitch();  
+		weights[0] = &mat1;            
+		weights[1] = &mat2; 
+		
+		if (detid.subdetId()==EcalEndcap) {
+		  EcalUncalibratedRecHit wrhit = (weightsAmplitude_endcap_.makeRecHit(*itdg, pedVec, pedRMSVec, gainRatios, weights, testbeamEEShape)); 
+		  if (wrhit.amplitude()>0) 
+		    uncalibRecHit.setSecondAmplitude( wrhit.amplitude() ); 
+		  else
+		    uncalibRecHit.setSecondAmplitude( 0.);
+		} else {  
+		  EcalUncalibratedRecHit wrhit = (weightsAmplitude_barrel_.makeRecHit(*itdg, pedVec, pedRMSVec, gainRatios, weights, testbeamEBShape)); 
+		  if (wrhit.amplitude()>0)
+		    uncalibRecHit.setSecondAmplitude( wrhit.amplitude() ); 
+		  else
+		    uncalibRecHit.setSecondAmplitude( 0.);
+		}
+	      }
 
 	    } else {
 	      uncalibRecHit.setSecondAmplitude( uncalibRecHit.amplitude() );    
 	    }
 	      
-	    //std::cout << "chiara: dopo i miei cambi -> detId = " << uncalibRecHit.id().rawId() << std::endl;
-	    //std::cout << "chiara: ampiezza dentro il worker, dopo i miei cambi = " << uncalibRecHit.amplitude() << std::endl;
+	    //std::cout << "chiara: dentro il worker, dopo i miei cambi: detId =  " << uncalibRecHit.id().rawId() << ", ampiezza = " << uncalibRecHit.amplitude() << ", 2nd amplitude = " << uncalibRecHit.secondAmplitude() << std::endl;
 	     
             // === time computation ===
             if (timealgo_ == ratioMethod) {
