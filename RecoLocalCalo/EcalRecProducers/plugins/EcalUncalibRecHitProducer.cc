@@ -120,20 +120,17 @@ EcalUncalibRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es) {
 
         // loop over EB digis
         if (ebDigis){
-	  //std::cout << "chiara: prima del worker uncalib" << std::endl;
+	  //std::cout << "chiara, EcalUncalibRecHitProducer: prima del worker uncalib" << std::endl;
 	  worker_->run(evt, *ebDigis, *ebUncalibRechits);
-	  //std::cout << "chiara: dopo worker uncalib" << std::endl;
+	  //std::cout << "chiara, EcalUncalibRecHitProducer: dopo worker uncalib" << std::endl;
 	}
 
         // loop over EB digis
         if (eeDigis){
-	  //std::cout << "chiara: prima del worker uncalib" << std::endl;
+	  //std::cout << "chiara, EcalUncalibRecHitProducer: prima del worker uncalib" << std::endl;
 	  worker_->run(evt, *eeDigis, *eeUncalibRechits);
-	  //std::cout << "chiara: dopo worker uncalib" << std::endl;
+	  //std::cout << "chiara, EcalUncalibRecHitProducer: dopo worker uncalib" << std::endl;
 	}
-
-	//for(EBUncalibratedRecHitCollection::const_iterator it  = ebUncalibRechits->begin(); it != ebUncalibRechits->end(); ++it) 
-	//  std::cout << "chiara, check: EB hits: " << it->amplitude() << ", " << it->id().rawId() << std::endl; 
 
         // put the collection of recunstructed hits in the event
         evt.put(std::move(ebUncalibRechits), ebHitCollection_);
