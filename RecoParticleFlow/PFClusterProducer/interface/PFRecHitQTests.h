@@ -26,6 +26,10 @@ public:
     }
 
     bool test(reco::PFRecHit& hit, const EcalRecHit& rh, bool& clean, bool fullReadOut) override{
+
+      // std::cout << "chiara: PFRecHitQTests => test -> override1 => energy = " << rh.energy() << ", PF energy = " << hit.energy() 
+      // << ", detId = " << rh.id().rawId() << ", PFDetId = " << ((DetId)(hit.detId())).rawId() << std::endl;
+
       return fullReadOut or pass(hit);
     }
     bool test(reco::PFRecHit& hit, const HBHERecHit& rh, bool& clean) override{
@@ -380,12 +384,14 @@ protected:
 class PFRecHitQTestECALMultiThreshold : public PFRecHitQTestBase {
 public:
   PFRecHitQTestECALMultiThreshold() {
+
   }
 
   PFRecHitQTestECALMultiThreshold(const edm::ParameterSet& iConfig):
     PFRecHitQTestBase(iConfig),
     thresholds_(iConfig.getParameter<std::vector<double> >("thresholds"))
   {
+    // std::cout << "chiara: PFRecHitQTestECALMultiThreshold costruttore" << std::endl;
     if (thresholds_.size() != EcalRingCalibrationTools::N_RING_TOTAL)
       throw edm::Exception(edm::errors::Configuration, "ValueError")
         << "thresholds is expected to have " << EcalRingCalibrationTools::N_RING_TOTAL << " elements but has " << thresholds_.size();
@@ -403,8 +409,19 @@ public:
   }
 
   bool test(reco::PFRecHit& hit, const EcalRecHit& rh, bool& clean, bool fullReadOut) override{
-    return fullReadOut or pass(hit);
+
+    // std::cout << "chiara: PFRecHitQTests => test -> override => energy = " << rh.energy() << ", PF energy = " << hit.energy() 
+    // << ", detId = " << rh.id().rawId() << ", PFDetId = " << ((DetId)(hit.detId())).rawId() << std::endl;
+    //return fullReadOut or pass(hit);
+
+    float secEne  = rh.secondEnergy();
+    bool isBarrel = true;
+    if (rh.id().subdetId() != EcalBarrel) isBarrel = false;
+    int theIndex = EcalRingCalibrationTools::getRingIndex(rh.id());
+
+    return fullReadOut or pass(secEne, isBarrel, theIndex);  
   }
+
   bool test(reco::PFRecHit& hit, const HBHERecHit& rh, bool& clean) override{
     return true;
   }
@@ -430,7 +447,10 @@ protected:
 
   bool pass(const reco::PFRecHit& hit){
 
-    DetId detId(hit.detId());
+    //std::cout << "chiara: PFRecHitQTests => dentro pass" << std::endl;
+
+    DetId detId(hit.detId());    
+    //std::cout <<  "chiara: PFRecHitQTests => dentro pass => detId = " << detId.rawId() << ", energy (PF) = " << hit.energy() << std::endl;
 
     // this is to skip endcap ZS for Phase2 until there is a defined geometry
     // apply the loosest ZS threshold, for the first eta-ring in EB
@@ -451,6 +471,29 @@ protected:
 
     return false;
   }
+
+  bool pass(float secEnergy, bool isBarrel, int iring){
+
+    //std::cout << "chiara: PFRecHitQTests => dentro pass, nuova versione con RH: secEnergy = " << secEnergy << std::endl;
+
+    // this is to skip endcap ZS for Phase2 until there is a defined geometry
+    // apply the loosest ZS threshold, for the first eta-ring in EB
+    if (not endcapGeometrySet_) {
+
+      // there is only ECAL EB in Phase 2
+      if(!isBarrel) return true;
+
+      //   0-169: EB  eta-rings
+      // 170-208: EE- eta rings
+      // 209-247: EE+ eta rings
+      int firstEBRing = 0;
+      return (secEnergy > thresholds_[firstEBRing]);
+    }
+
+    if (secEnergy > thresholds_[iring]) return true;
+
+    return false;
+  }
 };
 
 
@@ -468,13 +511,15 @@ class PFRecHitQTestECAL : public PFRecHitQTestBase {
       timingCleaning_(iConfig.getParameter<bool>("timingCleaning")),
       topologicalCleaning_(iConfig.getParameter<bool>("topologicalCleaning")),
       skipTTRecoveredHits_(iConfig.getParameter<bool>("skipTTRecoveredHits"))
-  {
-  }
+	{ }
+      // std::cout << "chiara: PFRecHitQTestECAL" << std::endl;
+      // }
 
     void beginEvent(const edm::Event& event, const edm::EventSetup& iSetup) override {
     }
 
   bool test(reco::PFRecHit& hit, const EcalRecHit& rh, bool& clean, bool fullReadOut) override{
+    // std::cout << "dentro il nuovo test con i recovery" << std::endl;
     if (skipTTRecoveredHits_ and rh.checkFlag(EcalRecHit::kTowerRecovered))
     {
       clean=true;
@@ -547,6 +592,7 @@ public:
   void beginEvent(const edm::Event& event, const edm::EventSetup& iSetup) override {
   }
 
+  // chiara: secondo me questo NON va modificato
   bool test(reco::PFRecHit& hit, const EcalRecHit& rh, bool& clean, bool fullReadOut) override {
 
     if ( rh.energy() < thresholdCleaning_ ) {
