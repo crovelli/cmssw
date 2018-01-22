@@ -60,10 +60,14 @@ public:
           kESTS15Sigmas
   };
 
- EcalRecHit(): energy_(0), secondEnergy_(energy_), time_(0), flagBits_(0) {}
+ EcalRecHit(): energy_(0), time_(0), flagBits_(0) {
+    secondEnergy_ = energy_;
+  }
   // by default a recHit is greated with no flag
   explicit EcalRecHit(const DetId& id, float energy, float time, uint32_t extra = 0, uint32_t flagBits = 0):
-  id_(id), energy_(energy), secondEnergy_(energy_), time_(time), flagBits_(flagBits), extra_(extra) {}
+  id_(id), energy_(energy), time_(time), flagBits_(flagBits), extra_(extra) {
+    secondEnergy_ = energy_;
+  }
 
   float energy() const { return energy_; }
   void setEnergy(float energy) { energy_=energy; }
