@@ -25,12 +25,15 @@
 #include "Geometry/CaloTopology/interface/EcalTrigTowerConstituentsMap.h"
 #include "RecoCaloTools/Navigation/interface/CaloNavigator.h"
 
+#include <iostream>
+
 class PFEcalBarrelRecHitCreator :  public  PFRecHitCreatorBase {
 
  public:  
  PFEcalBarrelRecHitCreator(const edm::ParameterSet& iConfig,edm::ConsumesCollector& iC):
   PFRecHitCreatorBase(iConfig,iC)
     {
+      //std::cout << "chiara: PFEcalBarrelRecHitCreator, costruttore" << std::endl;
       recHitToken_ = iC.consumes<EcalRecHitCollection>(iConfig.getParameter<edm::InputTag>("src"));
       auto srF = iConfig.getParameter<edm::InputTag>("srFlags");
       if (not srF.label().empty())
@@ -39,6 +42,8 @@ class PFEcalBarrelRecHitCreator :  public  PFRecHitCreatorBase {
     }
     
   void importRecHits(std::unique_ptr<reco::PFRecHitCollection>&out,std::unique_ptr<reco::PFRecHitCollection>& cleaned ,const edm::Event& iEvent,const edm::EventSetup& iSetup) override {
+
+    //std::cout << "chiara: PFEcalBarrelRecHitCreator, importRecHits" << std::endl;
 
     beginEvent(iEvent,iSetup);
       
@@ -82,6 +87,7 @@ class PFEcalBarrelRecHitCreator :  public  PFRecHitCreatorBase {
       bool keep=true;
 
       //Apply Q tests
+      //std::cout << "chiara: apply qtest" << std::endl;
       for( const auto& qtest : qualityTests_ ) {
         if (!qtest->test(rh,erh,rcleaned,hi)) {
           keep = false;	    
@@ -101,6 +107,8 @@ class PFEcalBarrelRecHitCreator :  public  PFRecHitCreatorBase {
   }
 
   void init(const edm::EventSetup &es) override {
+
+    //std::cout << "chiara: PFEcalBarrelRecHitCreator, init" << std::endl;
 
     edm::ESHandle<EcalTrigTowerConstituentsMap> hTriggerTowerMap;
     es.get<IdealGeometryRecord>().get(hTriggerTowerMap);
