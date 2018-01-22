@@ -81,7 +81,7 @@ EcalRecHitWorkerSimple::run( const edm::Event & evt,
                 EcalRecHitCollection & result )
 {
     DetId detid=uncalibRH.id();
-    //std::cout << "chiara: Working with amplitude " << uncalibRH.amplitude() << ", rawId = " << detid.rawId() << std::endl;
+    // std::cout << "chiara: EcalRecHitWorkerSimple => Working with amplitude " << uncalibRH.amplitude() << ", 2ns amplitude = " << uncalibRH.secondAmplitude() << ", rawId = " << detid.rawId() << std::endl;
     EcalChannelStatusMap::const_iterator chit = chStatus->find(detid);
     EcalChannelStatusCode::Code  dbstatus = chit->getStatusCode();
     
@@ -146,7 +146,7 @@ EcalRecHitWorkerSimple::run( const edm::Event & evt,
                                                       (itimeconst + offsetTime), 
                                                       /*recoflags_ 0*/ 
                                                       flagBits) );
-	//std::cout << "chiara: usciti dall'algo: rechit energy = " << myrechit.energy() << ", secondEnergy = " << myrechit.secondEnergy() << std::endl;
+	// std::cout << "chiara: EcalRecHitWorkerSimple => rechit energy = " << myrechit.energy() << ", secondEnergy = " << myrechit.secondEnergy() << std::endl;
         if (detid.subdetId() == EcalBarrel && (lasercalib < EBLaserMIN_ || lasercalib > EBLaserMAX_)) 
 	      myrechit.setFlag(EcalRecHit::kPoorCalib);
         if (detid.subdetId() == EcalEndcap && (lasercalib < EELaserMIN_ || lasercalib > EELaserMAX_)) 
