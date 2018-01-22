@@ -102,9 +102,7 @@ EcalRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es)
 	evt.getByToken( ebUncalibRecHitToken_, pEBUncalibRecHits);
 	ebUncalibRecHits = pEBUncalibRecHits.product();
 	LogDebug("EcalRecHitDebug") << "total # EB uncalibrated rechits: " << ebUncalibRecHits->size();
-        
-
-       
+               
 	evt.getByToken( eeUncalibRecHitToken_, pEEUncalibRecHits);
 	eeUncalibRecHits = pEEUncalibRecHits.product(); // get a ptr to the product
 	LogDebug("EcalRecHitDebug") << "total # EE uncalibrated rechits: " << eeUncalibRecHits->size();
@@ -126,10 +124,10 @@ EcalRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es)
         {
                 // loop over uncalibrated rechits to make calibrated ones
                 for(EBUncalibratedRecHitCollection::const_iterator it  = ebUncalibRecHits->begin(); it != ebUncalibRecHits->end(); ++it) {
-		  //std::cout << "chiara: prima del worker, EB" << std::endl;
-		  //std::cout << "chiara: ampiezza = " << (*it).amplitude() << ", secondamplitude = " << (*it).secondAmplitude() << ", id = " << (*it).id().rawId() << std::endl;
+		  //std::cout << "chiara: EcalRecHitProducer => ampiezza uncal = " << (*it).amplitude() << ", secondamplitude uncal = " << (*it).secondAmplitude() << ", id = " << (*it).id().rawId() << std::endl;
+		  //std::cout << "chiara: prima del worker_ EB rechits size = " << ebRecHits->size() << std::endl;
 		  worker_->run(evt, *it, *ebRecHits);
-		  //std::cout << "chiara: dopo worker" << std::endl;
+		  //std::cout << "chiara: dopo il worker_ EB rechits size = " << ebRecHits->size() << std::endl;
                 }
         }
 
@@ -137,15 +135,20 @@ EcalRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es)
         {
                 // loop over uncalibrated rechits to make calibrated ones
                 for(EEUncalibratedRecHitCollection::const_iterator it  = eeUncalibRecHits->begin(); it != eeUncalibRecHits->end(); ++it) {
-		  //std::cout << "chiara: prima del worker, EE" << std::endl;
-		  //std::cout << "chiara: ampiezza = " << (*it).amplitude() << ", secondamplitude = " << (*it).secondAmplitude() << ", id = " << (*it).id().rawId() << std::endl;
+		  //std::cout << "chiara: EcalRecHitProducer => ampiezza uncal = " << (*it).amplitude() << ", secondamplitude uncal = " << (*it).secondAmplitude() << ", id = " << (*it).id().rawId() << std::endl;
+		  //std::cout << "chiara: prima del worker_ EE rechits size = " << eeRecHits->size() << std::endl;
 		  worker_->run(evt, *it, *eeRecHits);
+		  //std::cout << "chiara: dopo il worker_ EE rechits size = " << eeRecHits->size() << std::endl;
                 }
         }
 
         // sort collections before attempting recovery, to avoid insertion of double recHits
+	//std::cout << "chiara, prima del sort : sizeEB = " << ebRecHits->size() << std::endl;
+	//std::cout << "chiara, prima del sort : sizeEE = " << eeRecHits->size() << std::endl;
         ebRecHits->sort();
         eeRecHits->sort();
+	//std::cout << "chiara, prima dei recovery : sizeEB = " << ebRecHits->size() << std::endl;
+	//std::cout << "chiara, prima dei recovery : sizeEE = " << eeRecHits->size() << std::endl;
         
         if ( recoverEBIsolatedChannels_ || recoverEBFE_ || killDeadChannels_ )
         {
@@ -264,17 +267,22 @@ EcalRecHitProducer::produce(edm::Event& evt, const edm::EventSetup& es)
         // to undefined results
 	ebRecHits->sort();
         eeRecHits->sort();
+	//std::cout  << "chiara: total # EB calibrated rechits dopo il recovery: " << ebRecHits->size() << std::endl;
+	//std::cout  << "chiara: total # EE calibrated rechits dopo il recovery: " << eeRecHits->size() << std::endl;
 	
 	// apply spike cleaning
 	if (cleaningAlgo_){
 	  cleaningAlgo_->setFlags(*ebRecHits);
 	  cleaningAlgo_->setFlags(*eeRecHits);
 	}
-
+	//std::cout  << "chiara: total # EB calibrated rechits dopo flags: " << ebRecHits->size() << std::endl;
+	//std::cout  << "chiara: total # EE calibrated rechits dopo flags: " << eeRecHits->size() << std::endl;
 
         // put the collection of recunstructed hits in the event   
         LogInfo("EcalRecHitInfo") << "total # EB calibrated rechits: " << ebRecHits->size();
         LogInfo("EcalRecHitInfo") << "total # EE calibrated rechits: " << eeRecHits->size();
+	//std::cout  << "chiara: total # EB calibrated rechits: " << ebRecHits->size() << std::endl;
+	//std::cout  << "chiara: total # EE calibrated rechits: " << eeRecHits->size() << std::endl;
 
         evt.put(std::move(ebRecHits), ebRechitCollection_);
         evt.put(std::move(eeRecHits), eeRechitCollection_);
