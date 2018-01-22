@@ -45,11 +45,13 @@ class EcalRecHitSimpleAlgo : public EcalRecHitAbsAlgo {
     float secondEnergy = uncalibRH.secondAmplitude()*adcToGeVConstant_*intercalibConstant;
     float time   = uncalibRH.jitter() * clockToNsConstant + timeIntercalib;
 
-    //std::cout << "Chiara: dentro EcalRecHitSimpleAlgo => amplitude = "  << uncalibRH.amplitude() << ", energy = " << energy  << std::endl;
-    //std::cout << "Chiara: dentro EcalRecHitSimpleAlgo => 2amplitude = " << uncalibRH.secondAmplitude() << ", 2energy = " << secondEnergy  << std::endl;
+    //std::cout << "chiara: dentro EcalRecHitSimpleAlgo => amplitude = "  << uncalibRH.amplitude()       << ", energy = "  << energy  << std::endl;
+    //std::cout << "chiara: dentro EcalRecHitSimpleAlgo => 2amplitude = " << uncalibRH.secondAmplitude() << ", 2energy = " << secondEnergy  << std::endl;
     EcalRecHit rh( uncalibRH.id(), energy, time );
     rh.setChi2( uncalibRH.chi2() );
+    //std::cout << "chiara: dentro EcalRecHitSimpleAlgo => 2energy dal rechit prima del set " << rh.secondEnergy() << std::endl;
     rh.setSecondEnergy(secondEnergy);
+    //std::cout << "chiara: dentro EcalRecHitSimpleAlgo => 2energy dal rechit dopo il set " << rh.secondEnergy() << std::endl;
     rh.setEnergyError( uncalibRH.amplitudeError()*adcToGeVConstant_*intercalibConstant);
     /* rh.setOutOfTimeEnergy( uncalibRH.outOfTimeEnergy() * adcToGeVConstant_ * intercalibConstant ); */
     /* rh.setOutOfTimeChi2( uncalibRH.outOfTimeChi2() ); */
