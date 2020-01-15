@@ -151,14 +151,15 @@ bool LowPtGsfElectronNNIDProducer::extrapolate_to_ECAL(reco::TrackPtr kfTrackRef
 void LowPtGsfElectronNNIDProducer::produce( edm::Event& event, const edm::EventSetup& setup ) {
 
   // Pileup
-  edm::Handle<double> rho;
-  event.getByToken(rho_,rho);
-  if ( !rho.isValid() ) { edm::LogError("Problem with rho handle"); }
+  edm::Handle<double> rhoH;
+  event.getByToken(rho_,rhoH);
+  if ( !rhoH.isValid() ) { edm::LogError("Problem with rho handle"); }
+  float rho=(float)*rhoH;    
 
   // Retrieve Collections from Event
   edm::Handle< edm::View<reco::GsfElectron> > gsfElectrons;
   event.getByToken(gsfElectrons_,gsfElectrons);
-  if ( !gsfElectrons.isValid() ) { edm::LogError("Problem with gsfElectrons handle"); }
+  if ( !gsfElectrons.isValid() ) { edm::LogError("Problem with lowPtGsfElectrons handle"); }
 
   edm::Handle< edm::View<pat::PackedCandidate> > packedCands;
   event.getByToken(packedCands_,packedCands);
@@ -190,7 +191,8 @@ void LowPtGsfElectronNNIDProducer::produce( edm::Event& event, const edm::EventS
     float unbiased = (*unbiasedH)[gsf];
 
     reco::TrackRef trk = ele->closestCtfTrackRef();  
-    if ( !trk.isNonnull() )  continue;
+    // if ( !trk.isNonnull() )  continue;
+    if ( trk.isNull() )  continue;
 
     if ( ele->superCluster().isNull() ) continue; 
     const reco::SuperClusterRef& sc = ele->superCluster();
@@ -198,8 +200,9 @@ void LowPtGsfElectronNNIDProducer::produce( edm::Event& event, const edm::EventS
     // ------------------------------------------------
     // calculate all needed input variables 
     double params[47];
+
     params[0] = gsf->pMode();    
-    params[1] = (*rho);  
+    params[1] = (rho);  
     params[2] = ele->pt();    
     params[3] = sc->eta();
     params[4] = ele->full5x5_sigmaIetaIeta();
@@ -376,9 +379,9 @@ void LowPtGsfElectronNNIDProducer::produce( edm::Event& event, const edm::EventS
     params[27] = trk_dr;
 
     // How many tracks there around first second and third cluster within dR<0.1  
-    int sc_clus1_ntrk_deta01_ = -999;
-    int sc_clus2_ntrk_deta01_ = -999;
-    int sc_clus3_ntrk_deta01_ = -999;
+    int sc_clus1_ntrk_deta01_ = 0;
+    int sc_clus2_ntrk_deta01_ = 0;
+    int sc_clus3_ntrk_deta01_ = 0;
     if(sc_clus1_E_>0){
       size_t iptr=0;
       for ( auto& ptr : *packedCands) {
@@ -439,6 +442,12 @@ void LowPtGsfElectronNNIDProducer::produce( edm::Event& event, const edm::EventS
     params[44] = sc_clus1_E_ov_p_;
     params[45] = sc_clus2_E_ov_p_;
     params[46] = sc_clus3_E_ov_p_;
+    
+    //std::cout << "" << std::endl;
+    //std::cout << "Inputs ===> " << std::endl;
+    //for (int ii=0; ii<47; ii++) std::cout << "ii = " << ii << ", params = " << params[ii] << std::endl;
+    //std::cout << "" << std::endl;
+    //std::cout << "Output ===> " << mlp->Evaluate(0,params) << std::endl;
 
     output[iele] = mlp->Evaluate(0,params); 
 
