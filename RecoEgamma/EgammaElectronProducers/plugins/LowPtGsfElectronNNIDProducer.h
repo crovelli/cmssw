@@ -24,17 +24,14 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "FastSimulation/BaseParticlePropagator/interface/BaseParticlePropagator.h"
 
+#include "RecoEgamma/EgammaElectronProducers/interface/NNIdClass.h"  
+
 #include <TROOT.h>
 #include "TVector3.h"
 #include <TTree.h>
 #include <TBranch.h>
 #include <string>
 #include <vector>
-
-#include <TMultiLayerPerceptron.h>
-#include <TMLPAnalyzer.h>
-#include <TNeuron.h>
-#include <TSynapse.h>
 
 namespace reco { typedef edm::Ptr<Track> TrackPtr; }
 namespace reco { typedef edm::Ref< edm::View<GsfElectron> > LowPtGsfElectronRef; }
@@ -56,7 +53,7 @@ class LowPtGsfElectronNNIDProducer : public edm::stream::EDProducer<> {
  private:
   
   // the NN        
-  TMultiLayerPerceptron *mlp ; 
+  NNIdClass* nn;
 
   const edm::EDGetTokenT< edm::View<reco::GsfElectron> > gsfElectrons_;
   const edm::EDGetTokenT<double> rho_;

@@ -12,7 +12,6 @@ LowPtGsfElectronNNIDProducer::LowPtGsfElectronNNIDProducer( const edm::Parameter
   unbiased_(consumes< edm::ValueMap<float> >(conf.getParameter<edm::InputTag>("unbiased"))),
   // 
   names_(conf.getParameter<std::string>("ModelName")),
-  weights_(conf.getParameter<std::string>("ModelWeights")),
   minPtThreshold_(conf.getParameter<double>("MinPtThreshold")),
   maxPtThreshold_(conf.getParameter<double>("MaxPtThreshold")),
   maxEtaThreshold_(conf.getParameter<double>("MaxEtaThreshold"))        
@@ -27,84 +26,9 @@ LowPtGsfElectronNNIDProducer::~LowPtGsfElectronNNIDProducer() {}
 void LowPtGsfElectronNNIDProducer::beginRun(edm::Run const&, edm::EventSetup const&)   {
 
   // std::cout<<"Init the NN ..."<<std::endl; 
-
-  // Build a fake Tree
-  TTree *faketree ;
-  faketree = new TTree("faketree", "Fake tree for NN training");
-
-  float gsf_dr, gsf_bdtout1, gsf_mode_p, trk_dr, core_shFracHits, eid_rho, eid_ele_pt , eid_sc_eta; 
-  float eid_shape_full5x5_sigmaIetaIeta, eid_shape_full5x5_sigmaIphiIphi, eid_shape_full5x5_circularity; 
-  float eid_shape_full5x5_r9, eid_sc_etaWidth, eid_sc_phiWidth, eid_shape_full5x5_HoverE;
-  float eid_trk_nhits, eid_trk_chi2red, eid_gsf_chi2red, eid_brem_frac, eid_gsf_nhits;
-  float eid_match_SC_EoverP, eid_match_eclu_EoverP, eid_match_SC_dEta, eid_match_SC_dPhi, eid_match_seed_dEta; 
-  float eid_sc_E, eid_trk_p, sc_clus1_E, sc_clus1_E_ov_p, sc_clus1_dphi, sc_clus1_deta, sc_clus2_E, sc_clus2_E_ov_p;
-  float sc_clus2_dphi, sc_clus2_deta, sc_clus3_E, sc_clus3_E_ov_p, sc_clus3_dphi, sc_clus3_deta, weight;
-  int sc_clus1_nxtal, sc_clus1_ntrk_deta01, sc_clus2_nxtal, sc_clus2_ntrk_deta01, sc_clus3_nxtal, sc_clus3_ntrk_deta01;
-  int sc_goodSeed,sc_Nclus, type;  
-
-  faketree->Branch("gsf_dr", &gsf_dr, "gsf_dr/f");
-  faketree->Branch("gsf_bdtout1", &gsf_bdtout1, "gsf_bdtout1/f");
-  faketree->Branch("gsf_mode_p", &gsf_mode_p, "gsf_mode_p/f");
-  faketree->Branch("trk_dr", &trk_dr, "trk_dr/f");
-  faketree->Branch("core_shFracHits",&core_shFracHits,"core_shFracHits/f");
-  faketree->Branch("eid_rho", &eid_rho, "eid_rho/f");
-  faketree->Branch("eid_ele_pt", &eid_ele_pt, "eid_ele_pt/f");
-  faketree->Branch("eid_sc_eta", &eid_sc_eta, "eid_sc_eta/f");
-  faketree->Branch("eid_shape_full5x5_sigmaIetaIeta", &eid_shape_full5x5_sigmaIetaIeta, "eid_shape_full5x5_sigmaIetaIeta/f");
-  faketree->Branch("eid_shape_full5x5_sigmaIphiIphi", &eid_shape_full5x5_sigmaIphiIphi, "eid_shape_full5x5_sigmaIphiIphi/f");
-  faketree->Branch("eid_shape_full5x5_circularity", &eid_shape_full5x5_circularity, "eid_shape_full5x5_circularity/f");
-  faketree->Branch("eid_shape_full5x5_r9", &eid_shape_full5x5_r9, "eid_shape_full5x5_r9/f");
-  faketree->Branch("eid_sc_etaWidth", &eid_sc_etaWidth, "eid_sc_etaWidth/f");
-  faketree->Branch("eid_sc_phiWidth", &eid_sc_phiWidth, "eid_sc_phiWidth/f");
-  faketree->Branch("eid_shape_full5x5_HoverE", &eid_shape_full5x5_HoverE, "eid_shape_full5x5_HoverE/f");
-  faketree->Branch("eid_trk_nhits", &eid_trk_nhits, "eid_trk_nhits/f");
-  faketree->Branch("eid_trk_chi2red", &eid_trk_chi2red, "eid_trk_chi2red/f");
-  faketree->Branch("eid_gsf_chi2red", &eid_gsf_chi2red, "eid_gsf_chi2red/f");
-  faketree->Branch("eid_brem_frac", &eid_brem_frac, "eid_brem_frac/f");
-  faketree->Branch("eid_gsf_nhits", &eid_gsf_nhits, "eid_gsf_nhits/f");
-  faketree->Branch("eid_match_SC_EoverP", &eid_match_SC_EoverP, "eid_match_SC_EoverP/f");
-  faketree->Branch("eid_match_eclu_EoverP", &eid_match_eclu_EoverP, "eid_match_eclu_EoverP/f");
-  faketree->Branch("eid_match_SC_dEta", &eid_match_SC_dEta, "eid_match_SC_dEta/f");
-  faketree->Branch("eid_match_SC_dPhi", &eid_match_SC_dPhi, "eid_match_SC_dPhi/f");
-  faketree->Branch("eid_match_seed_dEta", &eid_match_seed_dEta, "eid_match_seed_dEta/f");
-  faketree->Branch("eid_sc_E", &eid_sc_E,   "eid_sc_E/f");
-  faketree->Branch("eid_trk_p", &eid_trk_p, "eid_trk_p/f");
-  faketree->Branch("sc_goodSeed",&sc_goodSeed,"sc_goodSeed/O");
-  faketree->Branch("sc_Nclus",&sc_Nclus,"sc_Nclus/I");
-  faketree->Branch("sc_clus1_E",     &sc_clus1_E,     "sc_clus1_E/F");
-  faketree->Branch("sc_clus1_E_ov_p",     &sc_clus1_E_ov_p,     "sc_clus1_E_ov_p/F");
-  faketree->Branch("sc_clus1_nxtal", &sc_clus1_nxtal, "sc_clus1_nxtal/I");
-  faketree->Branch("sc_clus1_dphi",  &sc_clus1_dphi,  "sc_clus1_dphi/F");
-  faketree->Branch("sc_clus1_deta",  &sc_clus1_deta,  "sc_clus1_deta/F");
-  faketree->Branch("sc_clus1_ntrk_deta01",  &sc_clus1_ntrk_deta01,  "sc_clus1_ntrk_deta01/I");
-  faketree->Branch("sc_clus2_E",     &sc_clus2_E,    "sc_clus2_E/F");
-  faketree->Branch("sc_clus2_E_ov_p",     &sc_clus2_E_ov_p,     "sc_clus2_E_ov_p/F");
-  faketree->Branch("sc_clus2_nxtal", &sc_clus2_nxtal, "sc_clus2_nxtal/I");
-  faketree->Branch("sc_clus2_dphi",  &sc_clus2_dphi,  "sc_clus2_dphi/F");
-  faketree->Branch("sc_clus2_deta",  &sc_clus2_deta,  "sc_clus2_deta/F");
-  faketree->Branch("sc_clus2_ntrk_deta01",  &sc_clus2_ntrk_deta01,  "sc_clus2_ntrk_deta01/I");
-  faketree->Branch("sc_clus3_E",     &sc_clus3_E,    "sc_clus3_E/F");
-  faketree->Branch("sc_clus3_E_ov_p",     &sc_clus3_E_ov_p,     "sc_clus3_E_ov_p/F");
-  faketree->Branch("sc_clus3_nxtal", &sc_clus3_nxtal, "sc_clus3_nxtal/I");
-  faketree->Branch("sc_clus3_dphi",  &sc_clus3_dphi,  "sc_clus3_dphi/F");
-  faketree->Branch("sc_clus3_deta",  &sc_clus3_deta,  "sc_clus3_deta/F");
-  faketree->Branch("sc_clus3_ntrk_deta01",  &sc_clus3_ntrk_deta01,  "sc_clus3_ntrk_deta01/I");
-  faketree->Branch("type",   &type,   "type/I");
-  faketree->Branch("weight", &weight, "weight/f");
   
-  // Build the NN
-  mlp = new TMultiLayerPerceptron("@gsf_mode_p,@eid_rho,@eid_ele_pt,@eid_sc_eta,@eid_shape_full5x5_sigmaIetaIeta,@eid_shape_full5x5_sigmaIphiIphi,@eid_shape_full5x5_circularity,@eid_shape_full5x5_r9,@eid_sc_etaWidth,@eid_sc_phiWidth,@eid_shape_full5x5_HoverE,@eid_trk_nhits,@eid_trk_chi2red,@eid_gsf_chi2red,@eid_brem_frac,@eid_gsf_nhits,@eid_match_SC_EoverP,@eid_match_eclu_EoverP,@eid_match_SC_dEta,@eid_match_SC_dPhi,@eid_match_seed_dEta,@eid_sc_E,@eid_trk_p,@gsf_bdtout1,@sc_goodSeed,@core_shFracHits,@gsf_dr,@trk_dr,@sc_Nclus,@sc_clus1_nxtal,@sc_clus2_nxtal,@sc_clus3_nxtal,@sc_clus1_dphi,@sc_clus2_dphi,@sc_clus3_dphi,@sc_clus1_deta,@sc_clus2_deta,@sc_clus3_deta,@sc_clus1_E,@sc_clus2_E,@sc_clus3_E,@sc_clus1_ntrk_deta01,@sc_clus2_ntrk_deta01,@sc_clus3_ntrk_deta01,@sc_clus1_E_ov_p,@sc_clus2_E_ov_p,@sc_clus3_E_ov_p:23:12:type","weight",faketree,"Entry$%2","(Entry$+1)%2");
+  nn = new NNIdClass();  
 
-  // std::cout<<"Loading the NN weights"<<std::endl; 
-  mlp->LoadWeights(weights_.c_str());
-  // std::cout << "Done loading the NN weights: " << weights_ << std::endl; 
-  
-  TMLPAnalyzer ana(mlp);
-
-  // Initialisation
-  ana.GatherInformations();
-  ana.CheckNetwork();
-    
   // std::cout<<"Init the NN ... done"<<std::endl; 
 }
 
@@ -113,7 +37,7 @@ void LowPtGsfElectronNNIDProducer::endRun(edm::Run const&, edm::EventSetup const
 
   // std::cout<<"ending the NN ..."<<std::endl; 
 
-  delete mlp;
+  delete nn;
 
   // std::cout<<"ending the NN ... done"<<std::endl; 
 }
@@ -191,7 +115,6 @@ void LowPtGsfElectronNNIDProducer::produce( edm::Event& event, const edm::EventS
     float unbiased = (*unbiasedH)[gsf];
 
     reco::TrackRef trk = ele->closestCtfTrackRef();  
-    // if ( !trk.isNonnull() )  continue;
     if ( trk.isNull() )  continue;
 
     if ( ele->superCluster().isNull() ) continue; 
@@ -446,10 +369,10 @@ void LowPtGsfElectronNNIDProducer::produce( edm::Event& event, const edm::EventS
     //std::cout << "" << std::endl;
     //std::cout << "Inputs ===> " << std::endl;
     //for (int ii=0; ii<47; ii++) std::cout << "ii = " << ii << ", params = " << params[ii] << std::endl;
-    //std::cout << "" << std::endl;
-    //std::cout << "Output ===> " << mlp->Evaluate(0,params) << std::endl;
 
-    output[iele] = mlp->Evaluate(0,params); 
+    output[iele] = nn->Value(0,params[0],params[1],params[2],params[3],params[4],params[5],params[6],params[7],params[8],params[9],params[10], params[11],params[12],params[13],params[14],params[15],params[16],params[17],params[18],params[19],params[20], params[21],params[22],params[23],params[24],params[25],params[26],params[27],params[28],params[29],params[30], params[31],params[32],params[33],params[34],params[35],params[36],params[37],params[38],params[39],params[40], params[41],params[42],params[43],params[44],params[45],params[46] );
+
+    // std::cout << "Output ===> " << output[iele] << std::endl;  
 
   } // loop over electrons
 
@@ -475,7 +398,6 @@ void LowPtGsfElectronNNIDProducer::fillDescriptions( edm::ConfigurationDescripti
   desc.add<edm::InputTag>("unbiased",edm::InputTag("lowPtGsfElectronSeedValueMaps:unbiased"));
 
   desc.add<std::string>("ModelName","unbiasNN");
-  desc.add<std::string>("ModelWeights","weights.txt");
   desc.add<double>("ModelThresholds",-50);
   desc.add<double>("MinPtThreshold",0.5);
   desc.add<double>("MaxPtThreshold",15.);
