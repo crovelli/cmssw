@@ -129,7 +129,6 @@ double LowPtGsfElectronIDProducer::eval(const std::string& name, const reco::Gsf
   if (iter != names_.end()) {
     int index = std::distance(names_.begin(), iter);
     std::vector<float> inputs = lowptgsfeleid::features(ele, rho, unbiased);
-    std::cout << "Dentro LowPtGsfElectronIDProducer : output = " << models_.at(index)->GetResponse(inputs.data()) << std::endl;
     return models_.at(index)->GetResponse(inputs.data());
   } else {
     throw cms::Exception("Unknown model name") << "'Name given: '" << name << "'. Check against configuration file.\n";
