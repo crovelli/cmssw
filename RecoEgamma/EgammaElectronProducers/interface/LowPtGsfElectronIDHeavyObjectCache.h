@@ -15,37 +15,43 @@ namespace lowptgsfeleid {
   
   class Features {
   public:
-    // KF track
-    float trk_p_ = -1.;
-    float trk_nhits_ = -1.;
-    float trk_chi2red_ = -1.;
-    // GSF track
-    float gsf_nhits_ = -1.;
-    float gsf_chi2red_ = -1.;
-    // SC 
-    float sc_E_ = -1.;
-    float sc_eta_ = -1.;
-    float sc_etaWidth_ = -1.;
-    float sc_phiWidth_ = -1.;
-    // Track-cluster matching
-    float match_seed_dEta_ = -1.;
-    float match_eclu_EoverP_ = -1.;
-    float match_SC_EoverP_ = -1.;
-    float match_SC_dEta_ = -1.;
-    float match_SC_dPhi_ = -1.;
-    // Shower shape vars
-    float shape_full5x5_sigmaIetaIeta_ = -1.;
-    float shape_full5x5_sigmaIphiIphi_ = -1.;
-    float shape_full5x5_HoverE_ = -1.;
-    float shape_full5x5_r9_ = -1.;
-    float shape_full5x5_circularity_ = -1.;
-    // Misc
-    float rho_ = -1.;
-    float brem_frac_ = -1.;
-    float ele_pt_ = -1.;
+    float eid_rho = -999.;                  
+    float eid_sc_eta = -999.;               
+    float eid_shape_full5x5_r9 = -999.;     
+    float eid_sc_etaWidth = -999.;          
+    float eid_sc_phiWidth = -999.;          
+    float eid_shape_full5x5_HoverE = -999.; 
+    float eid_trk_nhits = -999.;            
+    float eid_trk_chi2red = -999.;          
+    float eid_gsf_chi2red = -999.;          
+    float eid_brem_frac = -999.;            
+    float eid_gsf_nhits = -999.;            
+    float eid_match_SC_EoverP = -999.;      
+    float eid_match_eclu_EoverP = -999.;    
+    float eid_match_SC_dEta   = -999.;      
+    float eid_match_SC_dPhi   = -999.;      
+    float eid_match_seed_dEta = -999.;      
+    float eid_sc_E = -999.;                 
+    float eid_trk_p = -999.;                
+    float gsf_mode_p = -999.;               
+    float core_shFracHits = -999.;          
+    float gsf_bdtout1 = -999.;              
+    float gsf_dr = -999.;                   
+    float trk_dr = -999.; 
+    float sc_Nclus = -999.;
+    float sc_clus1_nxtal  = -999.;  
+    float sc_clus1_dphi = -999.;  
+    float sc_clus2_dphi = -999.;  
+    float sc_clus1_deta = -999.;  
+    float sc_clus2_deta = -999.;  
+    float sc_clus1_E = -999.;  
+    float sc_clus2_E = -999.;  
+    float sc_clus1_E_ov_p = -999.;  
+    float sc_clus2_E_ov_p = -999.;    
+
   public:
     std::vector<float> get();
-    void set( const reco::GsfElectronRef& ele, double rho );
+    void set( const reco::GsfElectronRef& ele, double rho, float unbiased = -10. );
   };
   
   class HeavyObjectCache {
@@ -56,7 +62,7 @@ namespace lowptgsfeleid {
 
     std::vector<std::string> modelNames() const { return names_; }
 
-    double eval( const std::string& name, const reco::GsfElectronRef&, double rho ) const;
+    double eval( const std::string& name, const reco::GsfElectronRef&, double rho, float unbiased = -10. ) const;
     
   private:
 

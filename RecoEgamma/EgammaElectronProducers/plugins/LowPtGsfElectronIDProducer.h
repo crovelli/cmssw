@@ -34,6 +34,7 @@ public edm::stream::EDProducer< edm::GlobalCache<lowptgsfeleid::HeavyObjectCache
   
   const edm::EDGetTokenT<reco::GsfElectronCollection> gsfElectrons_;
   const edm::EDGetTokenT<double> rho_;
+  const edm::EDGetTokenT< edm::ValueMap<float> > unbiased_;
   const std::vector<std::string> names_;
   const bool passThrough_;
   const double minPtThreshold_;
